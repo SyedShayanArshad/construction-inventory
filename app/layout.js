@@ -26,7 +26,7 @@ export default function RootLayout({ children }) {
       >
         <div className="flex min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
           <Sidebar />
-          <main className="flex-1 md:pl-64 pb-20 md:pb-6">
+          <main className="flex-1 w-full md:pl-64 pb-20 md:pb-6">
             <div className="p-4 md:p-6">
               {children}
             </div>
