@@ -543,7 +543,7 @@ export default function Sales() {
             <div class="logo-section">
               <div class="logo">CM</div>
               <div>
-                <h1 class="company-name">Construction Material Shop</h1>
+                <h1 class="company-name">Manzoor Construction Material</h1>
                 <p class="invoice-title">Tax Invoice</p>
               </div>
             </div>
@@ -566,9 +566,9 @@ export default function Sales() {
             <div class="address-section">
               <div class="address-title">From</div>
               <div class="address-content">
-                <div>Construction Material Shop</div>
-                <div>Plot 123, Shah Faisal Colony</div>
-                <div>Karachi, Pakistan</div>
+                <div>Manzoor Construction Material</div>
+                <div>Chak No 11/1.A.L, Renala Khurd</div>
+                <div>Okara, Pakistan</div>
                 <div>+92 300 1234567</div>
                 <div>info@constructionshop.pk</div>
               </div>
@@ -1372,7 +1372,7 @@ export default function Sales() {
                     </div>
                     <div>
                       <h2 className="text-2xl font-bold text-gray-800">TAX INVOICE</h2>
-                      <p className="text-gray-600">Construction Material Shop</p>
+                      <p className="text-gray-600">Manzoor Construction Material</p>
                     </div>
                   </div>
                 </div>
@@ -1405,9 +1405,9 @@ export default function Sales() {
                 <div className="bg-gradient-to-br from-gray-50 to-gray-100 p-4 rounded-lg border border-gray-200 shadow-sm">
                   <h3 className="font-bold text-gray-800 mb-3 pb-2 border-b">From</h3>
                   <div className="space-y-1">
-                    <p className="text-sm text-gray-800 font-medium">Construction Material Shop</p>
-                    <p className="text-sm text-gray-600">Plot 123, Shah Faisal Colony</p>
-                    <p className="text-sm text-gray-600">Karachi, Pakistan</p>
+                    <p className="text-sm text-gray-800 font-medium">Manzoor Construction Material</p>
+                    <p className="text-sm text-gray-600">Chak No 11/1.A.L, Renala Khurd</p>
+                    <p className="text-sm text-gray-600">Okara, Pakistan</p>
                     <p className="text-sm text-gray-600">+92 300 1234567</p>
                     <p className="text-sm text-gray-600">info@constructionshop.pk</p>
                   </div>
