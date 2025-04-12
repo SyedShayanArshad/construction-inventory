@@ -18,7 +18,7 @@ export default function Sidebar() {
     <div className="hidden md:flex flex-col w-64 bg-white border-r h-screen p-4 fixed shadow-sm">
       <div className="mb-8 mt-2">
         <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-4 rounded-lg mb-2">
-          <h1 className="text-xl font-bold text-center">Construction</h1>
+          <h1 className="text-xl font-bold text-center">Manzoor Construction</h1>
           <p className="text-center text-blue-100 text-sm">Inventory Management</p>
         </div>
       </div>
@@ -92,8 +92,8 @@ export default function Sidebar() {
       
       <div className="mt-auto pt-4 border-t">
         <div className="bg-blue-50 p-4 rounded-lg">
-          <h3 className="text-sm font-medium text-blue-800 mb-2">Pakistan Inventory System</h3>
-          <p className="text-xs text-gray-600">Specialized construction materials management for Pakistani businesses.</p>
+          <h3 className="text-sm font-medium text-blue-800 mb-2">Construction Inventory System</h3>
+          <p className="text-xs text-gray-600">Specialized construction materials management for Retailers.</p>
         </div>
       </div>
     </div>
