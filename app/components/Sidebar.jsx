@@ -18,7 +18,7 @@ export default function Sidebar() {
     <div className="hidden md:flex flex-col w-64 bg-white border-r h-screen p-4 fixed shadow-sm">
       <div className="mb-8 mt-2">
         <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-4 rounded-lg mb-2">
-          <h1 className="text-xl font-bold text-center">Manzoor Construction</h1>
+          <h1 className="text-xl font-bold text-center">Javaid Building Material Shop</h1>
           <p className="text-center text-blue-100 text-sm">Inventory Management</p>
         </div>
       </div>

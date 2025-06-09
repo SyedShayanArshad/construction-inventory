@@ -568,7 +568,7 @@ export default function Sales() {
               <div class="address-content">
                 <div>Manzoor Construction Material</div>
                 <div>Chak No 11/1.A.L, Renala Khurd</div>
-                <div>Okara, Pakistan</div>
+                <div>Okara, Pakistan</div>ZINDABAD
                 <div>+92 300 1234567</div>
                 <div>info@constructionshop.pk</div>
               </div>
