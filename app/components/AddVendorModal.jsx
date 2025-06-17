@@ -1,3 +1,4 @@
+// app/components/AddVendorModal.js
 import React from 'react';
 import { useState } from 'react';
 
@@ -6,7 +7,7 @@ function AddVendorModal({ onClose, onSubmit, vendor = null, mode = 'add' }) {
   const [formData, setFormData] = useState(
     vendor || {
       name: '',
-      phone: '',
+      phoneNumber: '', // Changed from phone to phoneNumber
       address: '',
       notes: '',
     }
@@ -15,11 +16,11 @@ function AddVendorModal({ onClose, onSubmit, vendor = null, mode = 'add' }) {
   const handleSubmit = (e) => {
     e.preventDefault();
     onSubmit(formData);
-    onClose();
+    // Removed onClose() to allow parent to handle modal state after API response
     if (!isEditMode) {
       setFormData({
         name: '',
-        phone: '',
+        phoneNumber: '', // Changed from phone to phoneNumber
         address: '',
         notes: '',
       });
@@ -72,7 +73,7 @@ function AddVendorModal({ onClose, onSubmit, vendor = null, mode = 'add' }) {
         <form onSubmit={handleSubmit}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Vendor Name</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Vendor Name <b>*</b></label>
               <input
                 type="text"
                 required
@@ -89,13 +90,13 @@ function AddVendorModal({ onClose, onSubmit, vendor = null, mode = 'add' }) {
               <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
               <input
                 type="text"
-                required
-                value={formData.phone}
-                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                // Made phoneNumber optional as per schema
+                value={formData.phoneNumber}
+                onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
                 className={`w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 transition-colors ${
                   isEditMode ? 'focus:ring-green-500 focus:border-green-500' : 'focus:ring-blue-500 focus:border-blue-500'
                 }`}
-                placeholder="Title"
+                placeholder="Enter phone number (optional)"
               />
             </div>
 

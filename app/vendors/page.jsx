@@ -1,12 +1,11 @@
-"use client";
+// app/vendors/page.js
+'use client';
 
-import { useState } from "react";
-import {
-  vendors,
-  purchases,
-} from "../../lib/demo-data";
-import AddVendorModal from "../components/AddVendorModal";
-import VendorTransactionsModal from "../components/VendorTransactionsModal";
+import { useEffect, useState } from 'react';
+import AddVendorModal from '../components/AddVendorModal';
+import VendorTransactionsModal from '../components/VendorTransactionsModal';
+
+const formatCurrency = (amount) => `PKR ${amount.toLocaleString('en-PK', { minimumFractionDigits: 2 })}`;
 
 export default function Vendors() {
   const [showAddVendorModal, setShowAddVendorModal] = useState(false);
@@ -15,35 +14,87 @@ export default function Vendors() {
   const [showTransactionsModal, setShowTransactionsModal] = useState(false);
   const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
   const [selectedVendor, setSelectedVendor] = useState(null);
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchTerm, setSearchTerm] = useState('');
+  const [allVendors, setAllVendors] = useState([]);
+  const [vendorPurchasesMap, setVendorPurchasesMap] = useState({});
 
-  // Format currency in PKR format
-  const formatCurrency = (amount) => {
-    return new Intl.NumberFormat("ur-PK", {
-      style: "currency",
-      currency: "PKR",
-      maximumFractionDigits: 0,
-    }).format(amount);
+  const fetchVendors = async () => {
+    try {
+      const response = await fetch('/api/vendors');
+      if (!response.ok) {
+        throw new Error('Failed to fetch vendors');
+      }
+      const vendors = await response.json();
+      setAllVendors(vendors);
+
+      // Fetch purchases for each vendor
+      const purchasesMap = {};
+      for (const vendor of vendors) {
+        try {
+          const purchases = await getVendorPurchases(vendor.id);
+          purchasesMap[vendor.id] = purchases;
+        } catch (error) {
+          console.error(`Error fetching purchases for vendor ${vendor.id}:`, error);
+          purchasesMap[vendor.id] = [];
+        }
+      }
+      setVendorPurchasesMap(purchasesMap);
+    } catch (error) {
+      console.error('Error fetching vendors:', error);
+    }
   };
+
+  useEffect(() => {
+    fetchVendors();
+  }, []);
 
   // Filtered vendors
-  const filteredVendors = vendors.filter(
+  const filteredVendors = allVendors.filter(
     (vendor) =>
       vendor.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      vendor.phone.toLowerCase().includes(searchTerm.toLowerCase())
+      (vendor.phoneNumber && vendor.phoneNumber.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
-  const handleAddVendor = (vendorData) => {
-    // Add vendor to database or state
-    alert("Vendor added successfully!");
-    console.log("New Vendor:", vendorData);
+  const handleAddVendor = async (vendorData) => {
+    try {
+      const response = await fetch('/api/vendors', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(vendorData),
+      });
+      if (response.ok) {
+        alert('Vendor created successfully!');
+        setShowAddVendorModal(false);
+        fetchVendors();
+      } else {
+        const error = await response.json();
+        alert(`Error: ${error.error}`);
+      }
+    } catch (error) {
+      alert('Failed to create vendor');
+    }
   };
 
-  const handleUpdateVendor = (vendorData) => {
-    // Update vendor in database or state
-    alert("Vendor updated successfully!");
-    console.log("Updated Vendor:", vendorData);
-    setEditingVendor(null);
+  const handleUpdateVendor = async (vendorData) => {
+    try {
+      const res = await fetch(`/api/vendors/${editingVendor.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(vendorData),
+      });
+      if (res.ok) {
+        alert('Vendor updated successfully!');
+        setShowEditVendorModal(false);
+        setEditingVendor(null);
+        fetchVendors();
+      } else {
+        const error = await res.json();
+        alert(`Error: ${error.error}`);
+      }
+    } catch (error) {
+      console.error('Error updating vendor:', error);
+      alert('Failed to update vendor');
+    }
   };
 
   const handleDeleteVendor = (vendor) => {
@@ -51,9 +102,22 @@ export default function Vendors() {
     setShowDeleteConfirmModal(true);
   };
 
-  const confirmDeleteVendor = () => {
-    // In a real application, we would delete the vendor from the database
-    alert(`Vendor "${selectedVendor.name}" deleted successfully!`);
+  const confirmDeleteVendor = async () => {
+    try {
+      const res = await fetch(`/api/vendors/${selectedVendor.id}`, {
+        method: 'DELETE',
+      });
+      if (res.ok) {
+        alert(`Vendor "${selectedVendor.name}" deleted successfully!`);
+        fetchVendors();
+      } else {
+        const error = await res.json();
+        alert(`Error: ${error.error}`);
+      }
+    } catch (error) {
+      console.error('Error deleting vendor:', error);
+      alert('Failed to delete vendor');
+    }
     setShowDeleteConfirmModal(false);
     setSelectedVendor(null);
   };
@@ -63,19 +127,35 @@ export default function Vendors() {
     setShowTransactionsModal(true);
   };
 
-  // Get vendor purchases
-  const getVendorPurchases = (vendorId) => {
-    return purchases.filter((purchase) => purchase.vendorId === vendorId);
+  const getVendorPurchases = async (vendorId) => {
+    try {
+      // Updated to use correct API endpoint
+      const res = await fetch(`/api/purchase/${vendorId}`);
+      if (!res.ok) {
+        throw new Error('Failed to fetch vendor purchases');
+      }
+      return await res.json();
+    } catch (error) {
+      console.error('Error fetching vendor purchases:', error);
+      throw error;
+    }
   };
 
-  // Calculate total spent with vendor
   const calculateTotalSpent = (vendorId) => {
-    const vendorPurchases = getVendorPurchases(vendorId);
-    return vendorPurchases.reduce(
-      (total, purchase) => total + purchase.total,
-      0
-    );
+    const vendorPurchases = vendorPurchasesMap[vendorId] || [];
+    return vendorPurchases.reduce((total, purchase) => total + (purchase.totalAmount || 0), 0);
   };
+
+  // Calculate summary metrics
+  const totalPurchases = Object.values(vendorPurchasesMap).flat().reduce(
+    (total, purchase) => total + (purchase.totalAmount || 0),
+    0
+  );
+  const totalTransactions = Object.values(vendorPurchasesMap).flat().length;
+  const totalBalanceDue = Object.values(vendorPurchasesMap).flat().reduce(
+    (total, purchase) => total + ((purchase.totalAmount - purchase.amountPaid) || 0),
+    0
+  );
 
   return (
     <div className="space-y-6">
@@ -112,9 +192,7 @@ export default function Vendors() {
             >
               <path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM14 11a1 1 0 011 1v1h1a1 1 0 110 2h-1v1a1 1 0 11-2 0v-1h-1a1 1 0 110-2h1v-1a1 1 0 011-1z" />
             </svg>
-            <h2 className="text-xl font-medium text-gray-800">
-              Vendors Summary
-            </h2>
+            <h2 className="text-xl font-medium text-gray-800">Vendors Summary</h2>
           </div>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -130,12 +208,8 @@ export default function Vendors() {
               </svg>
             </div>
             <div>
-              <div className="text-sm font-medium text-blue-800">
-                Total Vendors
-              </div>
-              <div className="text-2xl font-bold text-blue-900">
-                {vendors.length}
-              </div>
+              <div className="text-sm font-medium text-blue-800">Total Vendors</div>
+              <div className="text-2xl font-bold text-blue-900">{allVendors.length}</div>
             </div>
           </div>
           <div className="bg-gradient-to-br from-green-50 to-green-100 p-4 rounded-lg shadow border border-green-200 flex items-center">
@@ -155,17 +229,8 @@ export default function Vendors() {
               </svg>
             </div>
             <div>
-              <div className="text-sm font-medium text-green-800">
-                Total Purchases
-              </div>
-              <div className="text-2xl font-bold text-green-900">
-                {formatCurrency(
-                  purchases.reduce(
-                    (total, purchase) => total + purchase.total,
-                    0
-                  )
-                )}
-              </div>
+              <div className="text-sm font-medium text-green-800">Total Purchases</div>
+              <div className="text-2xl font-bold text-green-900">{formatCurrency(totalPurchases)}</div>
             </div>
           </div>
           <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 p-4 rounded-lg shadow border border-yellow-200 flex items-center">
@@ -184,12 +249,8 @@ export default function Vendors() {
               </svg>
             </div>
             <div>
-              <div className="text-sm font-medium text-yellow-800">
-                Total Transactions
-              </div>
-              <div className="text-2xl font-bold text-yellow-900">
-                {purchases.length}
-              </div>
+              <div className="text-sm font-medium text-yellow-800">Total Transactions</div>
+              <div className="text-2xl font-bold text-yellow-900">{totalTransactions}</div>
             </div>
           </div>
           <div className="bg-gradient-to-br from-red-50 to-red-100 p-4 rounded-lg shadow border border-red-200 flex items-center">
@@ -208,14 +269,8 @@ export default function Vendors() {
               </svg>
             </div>
             <div>
-              <div className="text-sm font-medium text-red-800">
-                Total Balance Due
-              </div>
-              <div className="text-2xl font-bold text-red-900">
-                {formatCurrency(
-                  purchases.reduce((total, purchase) => total + purchase.due, 0)
-                )}
-              </div>
+              <div className="text-sm font-medium text-red-800">Total Balance Due</div>
+              <div className="text-2xl font-bold text-red-900">{formatCurrency(totalBalanceDue)}</div>
             </div>
           </div>
         </div>
@@ -263,7 +318,7 @@ export default function Vendors() {
           {searchTerm && (
             <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
               <button
-                onClick={() => setSearchTerm("")}
+                onClick={() => setSearchTerm('')}
                 className="text-gray-400 hover:text-gray-600 focus:outline-none"
               >
                 <svg
@@ -286,9 +341,9 @@ export default function Vendors() {
         <div className="flex items-center mb-4">
           <div className="text-sm text-gray-500">
             {filteredVendors.length === 0
-              ? "No vendors found"
+              ? 'No vendors found'
               : filteredVendors.length === 1
-              ? "1 vendor found"
+              ? '1 vendor found'
               : `${filteredVendors.length} vendors found`}
           </div>
         </div>
@@ -296,9 +351,9 @@ export default function Vendors() {
         <div
           className="w-full overflow-auto scrollbar-thin"
           style={{
-            maxWidth: "100vw",
-            overflowX: "auto",
-            WebkitOverflowScrolling: "touch",
+            maxWidth: '100vw',
+            overflowX: 'auto',
+            WebkitOverflowScrolling: 'touch',
           }}
         >
           <table className="w-full table-auto">
@@ -326,23 +381,19 @@ export default function Vendors() {
             </thead>
             <tbody className="divide-y divide-gray-200 bg-white">
               {filteredVendors.map((vendor) => {
-                // Calculate vendor's total purchases, paid and due amounts
-                const vendorPurchases = getVendorPurchases(vendor.id);
+                const vendorPurchases = vendorPurchasesMap[vendor.id] || [];
                 const totalPurchases = calculateTotalSpent(vendor.id);
                 const totalPaid = vendorPurchases.reduce(
-                  (total, purchase) => total + purchase.paid,
+                  (total, purchase) => total + (purchase.amountPaid || 0),
                   0
                 );
                 const balanceDue = vendorPurchases.reduce(
-                  (total, purchase) => total + purchase.due,
+                  (total, purchase) => total + ((purchase.totalAmount - purchase.amountPaid) || 0),
                   0
                 );
 
                 return (
-                  <tr
-                    key={vendor.id}
-                    className="hover:bg-gray-50 transition-colors"
-                  >
+                  <tr key={vendor.id} className="hover:bg-gray-50 transition-colors">
                     <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900">
                       {vendor.name}
                       {vendor.address && (
@@ -352,7 +403,7 @@ export default function Vendors() {
                       )}
                     </td>
                     <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                      {vendor.phone}
+                      {vendor.phoneNumber || '-'}
                     </td>
                     <td className="whitespace-nowrap px-3 py-4">
                       <div className="text-sm font-medium text-gray-900">
@@ -390,8 +441,10 @@ export default function Vendors() {
                           </svg>
                         </button>
                         <button
-                          onClick={() => {setEditingVendor({ ...vendor })
-                        setShowEditVendorModal(true)}}
+                          onClick={() => {
+                            setEditingVendor({ ...vendor });
+                            setShowEditVendorModal(true);
+                          }}
                           className="text-green-600 hover:text-green-800 transition-colors p-1.5 rounded-full hover:bg-green-50"
                           title="Edit Vendor"
                         >
@@ -469,15 +522,12 @@ export default function Vendors() {
                   />
                 </svg>
               </div>
-              <h2 className="text-xl font-bold text-red-600">
-                Confirm Deletion
-              </h2>
+              <h2 className="text-xl font-bold text-red-600">Confirm Deletion</h2>
             </div>
 
             <p className="mb-6 text-gray-700">
-              Are you sure you want to delete vendor{" "}
-              <span className="font-bold">{selectedVendor.name}</span>? This
-              action cannot be undone.
+              Are you sure you want to delete vendor{' '}
+              <span className="font-bold">{selectedVendor.name}</span>? This action cannot be undone.
             </p>
 
             <div className="flex justify-end space-x-3">

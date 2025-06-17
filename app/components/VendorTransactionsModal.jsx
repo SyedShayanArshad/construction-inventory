@@ -1,5 +1,10 @@
-import React from 'react';
+// app/components/VendorTransactionsModal.js
+'use client';
+
+import React, { useState, useEffect } from 'react';
 import VendorTransactionTable from './VendorTransactionTable';
+import Loading from './Loading';
+
 function VendorTransactionsModal({
   vendor,
   onClose,
@@ -7,7 +12,57 @@ function VendorTransactionsModal({
   formatCurrency,
   calculateTotalSpent,
 }) {
-  const purchases = getVendorPurchases(vendor.id);
+  const [purchases, setPurchases] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    async function fetchPurchases() {
+      try {
+        const data = await getVendorPurchases(vendor.id);
+        setPurchases(Array.isArray(data) ? data : []);
+        setLoading(false);
+      } catch (err) {
+        console.error('Error fetching purchases:', err);
+        setError('Failed to load purchases');
+        setLoading(false);
+      }
+    }
+    fetchPurchases();
+  }, [vendor.id, getVendorPurchases]);
+
+  if (loading) {
+    return (
+      <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
+        <div className="text-center bg-white rounded-xl shadow-2xl p-6 max-w-4xl w-full border border-gray-200">
+          <Loading />
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
+        <div className="bg-white rounded-xl shadow-2xl p-6 max-w-4xl w-full border border-gray-200">
+          <p className="text-red-500 text-center">{error}</p>
+          <div className="flex justify-end mt-4">
+            <button
+              onClick={onClose}
+              className="px-4 py-2 bg-gray-100 text-gray-800 rounded-md hover:bg-gray-200 transition-colors flex items-center"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const balanceDue = purchases.reduce(
+    (total, purchase) => total + (purchase.totalAmount - purchase.amountPaid),
+    0
+  );
 
   return (
     <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
@@ -69,7 +124,7 @@ function VendorTransactionsModal({
               </div>
               <div>
                 <div className="text-xs text-gray-500">Contact</div>
-                <div className="text-sm font-medium">{vendor.phone}</div>
+                <div className="text-sm font-medium">{vendor.phoneNumber || '-'}</div>
               </div>
             </div>
           </div>
@@ -138,9 +193,7 @@ function VendorTransactionsModal({
               </div>
               <div>
                 <div className="text-xs text-gray-500">Balance Due</div>
-                <div className="text-sm font-medium">
-                  {formatCurrency(purchases.reduce((total, purchase) => total + purchase.due, 0))}
-                </div>
+                <div className="text-sm font-medium">{formatCurrency(balanceDue)}</div>
               </div>
             </div>
           </div>

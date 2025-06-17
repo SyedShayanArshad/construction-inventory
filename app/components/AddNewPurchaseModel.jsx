@@ -1,21 +1,28 @@
 import React from "react";
-import { useState } from "react";
-import { vendors, products } from "@/lib/demo-data";
-function AddNewPurchaseModel({ onClose,product }) {
+import { useState, useEffect } from "react";
+import { formatCurrency } from "@/lib/utils";
+function AddNewPurchaseModel({ onClose, product }) {
   const [newPurchase, setNewPurchase] = useState({
-  date: new Date().toISOString().split("T")[0],
-  vendorId: product?.vendorId || "",
-  productId: product?.id || "",
-  quantity: "",
-  rate: product?.cost?.toString() || "",
-  sellingRate: product?.sellingRate || "",
-  totalAmount: "",
-  amountPaid: "",
-});
-
-  const handleNewPurchase = (e) => {
+    date: new Date().toISOString().split("T")[0],
+    vendorId: product?.vendorId || "",
+    productId: product?.id || "",
+    quantity: "",
+    rate: product?.cost?.toString() || "",
+    sellingRate: product?.sellingRate || "",
+    totalAmount: "",
+    amountPaid: "",
+  });
+  const [AllProducts, setAllProducts] = useState([]);
+  const [AllVendors, setAllVendors] = useState([]);
+  const handleNewPurchase = async (e) => {
     e.preventDefault();
-    // In a real application, we would add the purchase to the database
+    const respone = await fetch("api/purchase", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(newPurchase),
+    });
     alert("Purchase recorded successfully!");
     onClose();
     setNewPurchase({
@@ -29,21 +36,34 @@ function AddNewPurchaseModel({ onClose,product }) {
       amountPaid: "",
     });
   };
+  const fetchProducts = async () => {
+    try {
+      const response = await fetch("/api/products");
+      const data = await response.json();
+      setAllProducts(data);
+    } catch (error) {
+      console.error("Error fetching products:", error);
+    }
+  };
+  const fetchVendors = async () => {
+    try {
+      const response = await fetch("/api/vendors");
+      const data = await response.json();
+      setAllVendors(data);
+    } catch (error) {
+      console.error("Error fetching products:", error);
+    }
+  };
+  useEffect(() => {
+    fetchProducts();
+    fetchVendors();
+  }, []);
   // Calculate total amount when quantity or rate changes
   const calculateTotalAmount = (quantity, rate) => {
     if (quantity && rate) {
       return quantity * rate;
     }
     return "";
-  };
-
-  // Format currency in PKR format
-  const formatCurrency = (amount) => {
-    return new Intl.NumberFormat("ur-PK", {
-      style: "currency",
-      currency: "PKR",
-      maximumFractionDigits: 0,
-    }).format(amount);
   };
   return (
     <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
@@ -116,7 +136,7 @@ function AddNewPurchaseModel({ onClose,product }) {
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-green-500"
               >
                 <option value="">Select Vendor</option>
-                {vendors.map((vendor) => (
+                {AllVendors.map((vendor) => (
                   <option key={vendor.id} value={vendor.id}>
                     {vendor.name}
                   </option>
@@ -136,7 +156,7 @@ function AddNewPurchaseModel({ onClose,product }) {
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-green-500"
             >
               <option value="">Select Product</option>
-              {products.map((product) => (
+              {AllProducts.map((product) => (
                 <option key={product.id} value={product.id}>
                   {product.name}
                 </option>

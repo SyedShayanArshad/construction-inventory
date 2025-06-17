@@ -5,20 +5,31 @@ function AddNewProductModel({onClose}) {
     const [newProduct, setNewProduct] = useState({
         name: '',
         unit: '',
-        initialQuantity: '',
-        lowStockThreshold: ''
+        quantity: 0,
+        lowStockThreshold: 0,
+        category: ''
       });
-  const handleAddProduct = (e) => {
+  const handleAddProduct = async(e) => {
     e.preventDefault();
-    // In a real application, we would add the product to the database
-    alert('Product added successfully!');
-    onClose();
-    setNewProduct({
-      name: '',
-      unit: '',
-      initialQuantity: '',
-      lowStockThreshold: ''
+    try {
+      
+    const response = await fetch('/api/products', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(newProduct),
     });
+    if (response.ok) {
+        alert('Product created successfully!');
+      } else {
+        const error = await response.json();
+        alert(`Error: ${error.error}`);
+      }
+      } catch (error) {
+      alert('Failed to create Product');
+    }
+    
 };  
   return (
     <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
@@ -45,6 +56,7 @@ function AddNewProductModel({onClose}) {
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Product Name</label>
                 <input
+                  required
                   type="text"
                   value={newProduct.name}
                   onChange={(e) => setNewProduct({ ...newProduct, name: e.target.value })}
@@ -52,8 +64,19 @@ function AddNewProductModel({onClose}) {
                 />
               </div>
               <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                <input
+                  required
+                  type="text"
+                  value={newProduct.category}
+                  onChange={(e) => setNewProduct({ ...newProduct, category: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+              <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Unit</label>
                 <input
+                  required
                   type="text"
                   value={newProduct.unit}
                   onChange={(e) => setNewProduct({ ...newProduct, unit: e.target.value })}
@@ -64,15 +87,17 @@ function AddNewProductModel({onClose}) {
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Initial Quantity</label>
                   <input
+                    required
                     type="number"
-                    value={newProduct.initialQuantity}
-                    onChange={(e) => setNewProduct({ ...newProduct, initialQuantity: e.target.value })}
+                    value={newProduct.quantity}
+                    onChange={(e) => setNewProduct({ ...newProduct, quantity: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Low Stock Threshold</label>
                   <input
+                    required
                     type="number"
                     value={newProduct.lowStockThreshold}
                     onChange={(e) => setNewProduct({ ...newProduct, lowStockThreshold: e.target.value })}
@@ -101,4 +126,4 @@ function AddNewProductModel({onClose}) {
   )
 }
 
-export default AddNewProductModel
+export default AddNewProductModel;

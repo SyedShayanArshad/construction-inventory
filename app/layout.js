@@ -22,7 +22,7 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-gray-50`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-gray-50`} suppressHydrationWarning
       >
         <div className="flex min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
           <Sidebar />

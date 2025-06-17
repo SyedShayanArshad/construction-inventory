@@ -1,0 +1,174 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Product {
+  id                Int       @id @default(autoincrement())
+  name              String
+  unit              String
+  quantity          Int
+  lowStockThreshold Int
+  category          String
+  saleItems         SaleItem[]
+  purchaseItems     PurchaseItem[]
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+}
+// Add to your existing schema.prisma
+model Customer {
+  id          Int      @id @default(autoincrement())
+  name        String
+  phoneNumber String?  // Optional
+  balance     Float    @default(0)
+  sales       Sale[]   // Link to sales
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+model Sale {
+  id              Int            @id @default(autoincrement())
+  invoiceNumber   String         @unique
+  customerId      Int
+  customer        Customer       @relation(fields: [customerId], references: [id])
+  date            DateTime
+  saleItems       SaleItem[]
+  subTotal        Float
+  amountPaid      Float
+  paymentMethod   PaymentMethod
+  dueAmount       Float
+  status          SaleStatus     @default(PENDING)
+  paymentHistory  PaymentHistory[]
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+}
+model SaleItem {
+  id        Int      @id @default(autoincrement())
+  saleId    Int
+  productId Int
+  quantity  Int
+  unitPrice Float
+  discount  Float    @default(0)
+  total     Float
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  product   Product  @relation(fields: [productId], references: [id])
+  sale      Sale     @relation(fields: [saleId], references: [id], onDelete: Cascade)
+
+  @@index([productId], map: "SaleItem_productId_fkey")
+  @@index([saleId], map: "SaleItem_saleId_fkey")
+}
+
+model PaymentHistory {
+  id                  Int      @id @default(autoincrement())
+  saleId              Int
+  date                DateTime
+  amountPaid          Float
+  dueBeforePayment    Float
+  balanceAfterPayment Float
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  sale                Sale     @relation(fields: [saleId], references: [id], onDelete: Cascade)
+
+  @@index([saleId], map: "PaymentHistory_saleId_fkey")
+}
+
+model Vendor {
+  id             Int                    @id @default(autoincrement())
+  name           String
+  phoneNumber    String?
+  address        String?
+  notes          String?
+  totalPurchases Float                  @default(0)
+  amountPaid     Float                  @default(0)
+  balance        Float                  @default(0)
+  createdAt      DateTime               @default(now())
+  updatedAt      DateTime               @updatedAt
+  purchases      Purchase[]
+  paymentHistory VendorPaymentHistory[]
+}
+
+model Purchase {
+  id             Int                    @id @default(autoincrement())
+  date           DateTime
+  vendorId       Int
+  totalAmount    Float
+  amountPaid     Float
+  createdAt      DateTime               @default(now())
+  updatedAt      DateTime               @updatedAt
+  vendor         Vendor                 @relation(fields: [vendorId], references: [id])
+  purchaseItems  PurchaseItem[]
+  paymentHistory VendorPaymentHistory[]
+
+  @@index([vendorId], map: "Purchase_vendorId_fkey")
+}
+
+model PurchaseItem {
+  id                  Int                         @id @default(autoincrement())
+  purchaseId          Int
+  productId           Int
+  quantity            Int
+  rate                Float
+  sellRate            Float
+  total               Float
+  createdAt           DateTime                    @default(now())
+  updatedAt           DateTime                    @updatedAt
+  product             Product                     @relation(fields: [productId], references: [id])
+  purchase            Purchase                    @relation(fields: [purchaseId], references: [id], onDelete: Cascade)
+  paymentHistoryLinks VendorPaymentPurchaseItem[]
+
+  @@index([productId], map: "PurchaseItem_productId_fkey")
+  @@index([purchaseId], map: "PurchaseItem_purchaseId_fkey")
+}
+
+model VendorPaymentHistory {
+  id                  Int                         @id @default(autoincrement())
+  vendorId            Int
+  purchaseId          Int?
+  date                DateTime
+  total               Float
+  amountPaid          Float
+  duesStatus          VendorDuesStatus            @default(PENDING)
+  createdAt           DateTime                    @default(now())
+  updatedAt           DateTime                    @updatedAt
+  purchase            Purchase?                   @relation(fields: [purchaseId], references: [id])
+  vendor              Vendor                      @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  paymentHistoryLinks VendorPaymentPurchaseItem[]
+
+  @@index([purchaseId], map: "VendorPaymentHistory_purchaseId_fkey")
+  @@index([vendorId], map: "VendorPaymentHistory_vendorId_fkey")
+}
+
+model VendorPaymentPurchaseItem {
+  id              Int                  @id @default(autoincrement())
+  vendorPaymentId Int
+  purchaseItemId  Int
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
+  purchaseItem    PurchaseItem         @relation(fields: [purchaseItemId], references: [id], onDelete: Cascade)
+  vendorPayment   VendorPaymentHistory @relation(fields: [vendorPaymentId], references: [id], onDelete: Cascade)
+
+  @@unique([vendorPaymentId, purchaseItemId])
+  @@index([purchaseItemId], map: "VendorPaymentPurchaseItem_purchaseItemId_fkey")
+}
+
+enum PaymentMethod {
+  CASH
+  BANK_TRANSFER
+  ONLINE
+}
+
+enum SaleStatus {
+  PENDING
+  COMPLETED
+  PARTIALLY_PAID
+}
+
+enum VendorDuesStatus {
+  PENDING
+  CLEARED
+}
