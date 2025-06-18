@@ -1,20 +1,29 @@
-// app/api/vendors/route.js
-import prisma from "@/lib/prisma";
-import { NextResponse } from "next/server";
+import { NextResponse } from 'next/server';
+import prisma from '@/lib/prisma';
 
-export async function GET(request) {
+export async function GET() {
   try {
     const vendors = await prisma.vendor.findMany({
+      select: {
+        id: true,
+        name: true,
+        phoneNumber: true,
+        address: true,
+        notes: true,
+        totalPurchases: true,
+        amountPaid: true,
+        balance: true,
+        _count: {
+          select: { purchases: true },
+        },
+      },
       orderBy: { createdAt: 'desc' },
     });
-    if (!vendors || vendors.length === 0) {
-      return NextResponse.json({ error: "No vendors found" }, { status: 404 });
-    }
-    return NextResponse.json(vendors);
+    return NextResponse.json(vendors, { status: 200 });
   } catch (error) {
-    console.error("Error fetching vendors:", error);
+    console.error('[VENDORS_GET_ERROR]', error);
     return NextResponse.json(
-      { error: error.message || "Failed to fetch vendors" },
+      { error: 'Failed to fetch vendors' },
       { status: 500 }
     );
   }
@@ -22,29 +31,33 @@ export async function GET(request) {
 
 export async function POST(request) {
   try {
-    const data = await request.json();
-    if (!data.name) {
+    const body = await request.json();
+    const { name, phoneNumber, address, notes } = body;
+
+    if (!name) {
       return NextResponse.json(
-        { error: "Vendor name is required" },
+        { error: 'Vendor name is required' },
         { status: 400 }
       );
     }
+
     const vendor = await prisma.vendor.create({
       data: {
-        name: data.name,
-        phoneNumber: data.phoneNumber || null, // Changed to phoneNumber
-        address: data.address || null,
-        notes: data.notes || null,
+        name,
+        phoneNumber: phoneNumber || null,
+        address: address || null,
+        notes: notes || null,
         totalPurchases: 0,
         amountPaid: 0,
         balance: 0,
       },
     });
+
     return NextResponse.json(vendor, { status: 201 });
   } catch (error) {
-    console.error("Error creating vendor:", error);
+    console.error('[VENDOR_CREATE_ERROR]', error);
     return NextResponse.json(
-      { error: error.message || "Failed to create vendor" },
+      { error: 'Failed to create vendor' },
       { status: 500 }
     );
   }

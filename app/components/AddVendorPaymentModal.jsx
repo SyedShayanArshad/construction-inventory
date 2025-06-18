@@ -1,4 +1,3 @@
-// app/components/AddVendorPaymentModal.js
 import React, { useState, useEffect } from 'react';
 import { formatCurrency } from '@/lib/utils';
 import toast from 'react-hot-toast';
@@ -9,7 +8,7 @@ function AddVendorPaymentModal({ vendor, onClose, onSubmit }) {
     date: new Date().toISOString().split('T')[0],
     amountPaid: '',
     notes: '',
-    purchaseIds: [], // Array to store selected purchase IDs
+    purchaseIds: [],
   });
   const [purchases, setPurchases] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -20,7 +19,7 @@ function AddVendorPaymentModal({ vendor, onClose, onSubmit }) {
     const fetchPurchases = async () => {
       try {
         setFetchingPurchases(true);
-        const response = await fetch(`/api/purchases/${vendor.id}`);
+        const response = await fetch(`/api/purchase/${vendor.id}`);
         if (!response.ok) throw new Error('Failed to fetch purchases');
         const data = await response.json();
         // Filter purchases with outstanding balance

@@ -1,32 +1,51 @@
-// app/components/VendorTransactionsModal.js
 import React, { useState, useEffect } from 'react';
 import { formatCurrency } from '@/lib/utils';
 import Loading from './Loading';
+import toast from 'react-hot-toast';
 
 function VendorTransactionsModal({ vendor, onClose, getVendorPurchases, formatCurrency }) {
   const [purchases, setPurchases] = useState([]);
   const [paymentHistory, setPaymentHistory] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [tab, setTab] = useState('purchases'); // Toggle between purchases and payments
+  const [loadingPurchases, setLoadingPurchases] = useState(true);
+  const [loadingPayments, setLoadingPayments] = useState(true);
+  const [tab, setTab] = useState('purchases');
   const [sortConfig, setSortConfig] = useState({ key: 'date', direction: 'desc' });
 
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchPurchases = async () => {
       try {
-        setLoading(true);
-        const [purchasesData, paymentsData] = await Promise.all([
-          getVendorPurchases(vendor.id),
-          fetch(`/api/vendors/payments/${vendor.id}`).then((res) => res.json()),
-        ]);
-        setPurchases(purchasesData);
-        setPaymentHistory(paymentsData);
+        setLoadingPurchases(true);
+        const purchasesData = await getVendorPurchases(vendor.id);
+        console.log(`Purchases fetched for vendor ${vendor.id}:`, purchasesData);
+        setPurchases(Array.isArray(purchasesData) ? purchasesData : []);
       } catch (error) {
-        console.error('Error fetching data:', error);
+        console.error('Error fetching purchases:', error);
+        toast.error('Failed to load purchases');
+        setPurchases([]);
       } finally {
-        setLoading(false);
+        setLoadingPurchases(false);
       }
     };
-    fetchData();
+
+    const fetchPayments = async () => {
+      try {
+        setLoadingPayments(true);
+        const res = await fetch(`/api/vendors/payments/${vendor.id}`);
+        if (!res.ok) throw new Error(`Failed to fetch payment history: ${res.status} ${res.statusText}`);
+        const paymentsData = await res.json();
+        console.log(`Payments fetched for vendor ${vendor.id}:`, paymentsData);
+        setPaymentHistory(Array.isArray(paymentsData) ? paymentsData : []);
+      } catch (error) {
+        console.error('Error fetching payment history:', error);
+        toast.error('Failed to load payment history');
+        setPaymentHistory([]);
+      } finally {
+        setLoadingPayments(false);
+      }
+    };
+
+    fetchPurchases();
+    fetchPayments();
   }, [vendor.id, getVendorPurchases]);
 
   // Sorting function
@@ -38,13 +57,14 @@ function VendorTransactionsModal({ vendor, onClose, getVendorPurchases, formatCu
   };
 
   const sortedData = (data, key, direction) => {
+    if (!Array.isArray(data)) return [];
     return [...data].sort((a, b) => {
       if (key === 'date') {
         return direction === 'asc'
           ? new Date(a[key]) - new Date(b[key])
           : new Date(b[key]) - new Date(a[key]);
       }
-      return direction === 'asc' ? a[key] - b[key] : b[key] - a[key];
+      return direction === 'asc' ? (a[key] || 0) - (b[key] || 0) : (b[key] || 0) - (a[key] || 0);
     });
   };
 
@@ -60,6 +80,8 @@ function VendorTransactionsModal({ vendor, onClose, getVendorPurchases, formatCu
       </svg>
     );
   };
+
+  const isLoading = tab === 'purchases' ? loadingPurchases : loadingPayments;
 
   return (
     <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
@@ -111,7 +133,7 @@ function VendorTransactionsModal({ vendor, onClose, getVendorPurchases, formatCu
           </div>
         </div>
 
-        {loading ? (
+        {isLoading ? (
           <div className="flex justify-center py-10">
             <Loading />
           </div>
@@ -166,11 +188,15 @@ function VendorTransactionsModal({ vendor, onClose, getVendorPurchases, formatCu
                           {new Date(purchase.date).toLocaleDateString()}
                         </td>
                         <td className="px-3 py-4 text-sm text-gray-500">
-                          {purchase.purchaseItems.map((item) => (
-                            <div key={item.id}>
-                              {item.product.name} (x{item.quantity})
-                            </div>
-                          ))}
+                          {purchase.purchaseItems?.length > 0 ? (
+                            purchase.purchaseItems.map((item) => (
+                              <div key={item.id}>
+                                {item.product?.name || 'Unknown Product'} (x{item.quantity})
+                              </div>
+                            ))
+                          ) : (
+                            <div>No items</div>
+                          )}
                         </td>
                         <td className="whitespace-nowrap px-3 py-4 text-sm font-medium text-gray-900">
                           {formatCurrency(purchase.totalAmount)}
@@ -214,9 +240,6 @@ function VendorTransactionsModal({ vendor, onClose, getVendorPurchases, formatCu
                       <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Linked Purchases
                       </th>
-                      <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Notes
-                      </th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200 bg-white">
@@ -243,16 +266,18 @@ function VendorTransactionsModal({ vendor, onClose, getVendorPurchases, formatCu
                           </span>
                         </td>
                         <td className="px-3 py-4 text-sm text-gray-500">
-                          {payment.vendorPaymentPurchaseItems.length > 0
-                            ? payment.vendorPaymentPurchaseItems.map((item) => (
-                                <div key={item.id}>Purchase #{item.purchaseItem.purchaseId}</div>
-                              ))
-                            : payment.purchaseId
-                            ? `Purchase #${payment.purchaseId}`
-                            : '-'}
-                        </td>
-                        <td className="px-3 py-4 text-sm text-gray-500 max-w-xs truncate">
-                          {payment.notes || '-'}
+                          {payment.vendorPaymentPurchaseItems?.length > 0 ? (
+                            payment.vendorPaymentPurchaseItems.map((item) => (
+                              <div key={item.id}>
+                                Purchase #{item.purchaseItem?.purchaseId || 'N/A'} (
+                                {item.purchaseItem?.product?.name || 'Unknown'})
+                              </div>
+                            ))
+                          ) : payment.purchase ? (
+                            `Purchase #${payment.purchase.id}`
+                          ) : (
+                            '-'
+                          )}
                         </td>
                       </tr>
                     ))}

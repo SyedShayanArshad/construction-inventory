@@ -1,4 +1,3 @@
-// app/api/vendor/payments/route.js
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 
@@ -7,45 +6,33 @@ export async function POST(request) {
     const body = await request.json();
     const { vendorId, date, amountPaid, notes, purchaseIds } = body;
 
-    // Validate input
-    if (!vendorId || !amountPaid || !date) {
+    // Validation
+    if (!vendorId || !date || amountPaid === undefined || amountPaid <= 0) {
       return NextResponse.json(
-        { error: 'Vendor ID, date, and amount paid are required' },
+        { error: 'Vendor ID, date, and valid amount paid are required' },
         { status: 400 }
       );
     }
 
     const numericAmountPaid = Number(amountPaid);
-    if (numericAmountPaid <= 0) {
-      return NextResponse.json(
-        { error: 'Amount paid must be greater than zero' },
-        { status: 400 }
-      );
-    }
-
-    // Verify vendor exists and check balance
     const vendor = await prisma.vendor.findUnique({
       where: { id: Number(vendorId) },
     });
 
     if (!vendor) {
-      return NextResponse.json(
-        { error: 'Vendor not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'Vendor not found' }, { status: 404 });
     }
 
     if (numericAmountPaid > vendor.balance) {
       return NextResponse.json(
-        { error: `Amount paid exceeds vendor balance (${vendor.balance})` },
+        { error: 'Payment exceeds vendor balance' },
         { status: 400 }
       );
     }
 
-    // Fetch selected purchases if provided
-    let selectedPurchases = [];
+    let purchaseItems = [];
     if (purchaseIds && purchaseIds.length > 0) {
-      selectedPurchases = await prisma.purchase.findMany({
+      const purchases = await prisma.purchase.findMany({
         where: {
           id: { in: purchaseIds.map(Number) },
           vendorId: Number(vendorId),
@@ -53,70 +40,30 @@ export async function POST(request) {
         include: { purchaseItems: true },
       });
 
-      const totalDues = selectedPurchases.reduce(
-        (sum, purchase) => sum + (purchase.totalAmount - purchase.amountPaid),
-        0
-      );
-
-      if (numericAmountPaid > totalDues) {
+      if (purchases.length !== purchaseIds.length) {
         return NextResponse.json(
-          { error: `Amount paid exceeds selected purchases' dues (${totalDues})` },
+          { error: 'Invalid or unauthorized purchase IDs' },
           { status: 400 }
         );
       }
+
+      const totalDues = purchases.reduce(
+        (sum, p) => sum + (p.totalAmount - p.amountPaid),
+        0
+      );
+      if (numericAmountPaid > totalDues) {
+        return NextResponse.json(
+          { error: 'Payment exceeds selected purchases’ dues' },
+          { status: 400 }
+        );
+      }
+
+      purchaseItems = purchases.flatMap((p) => p.purchaseItems);
     }
 
-    // Distribute payment across selected purchases
-    let remainingPayment = numericAmountPaid;
+    // Create payment and update vendor in a transaction
     const payment = await prisma.$transaction(async (tx) => {
-      // Create VendorPaymentHistory record
-      const newPayment = await tx.vendorPaymentHistory.create({
-        data: {
-          vendorId: Number(vendorId),
-          date: new Date(date),
-          total: numericAmountPaid,
-          amountPaid: numericAmountPaid,
-          duesStatus: 'PENDING', // Will update based on purchase status
-          notes: notes || null,
-        },
-      });
-
-      // Update purchases and create VendorPaymentPurchaseItem records
-      const paymentPurchaseItems = [];
-      for (const purchase of selectedPurchases) {
-        if (remainingPayment <= 0) break;
-
-        const purchaseDue = purchase.totalAmount - purchase.amountPaid;
-        const paymentForPurchase = Math.min(remainingPayment, purchaseDue);
-
-        if (paymentForPurchase > 0) {
-          // Update purchase
-          await tx.purchase.update({
-            where: { id: purchase.id },
-            data: {
-              amountPaid: { increment: paymentForPurchase },
-            },
-          });
-
-          // Create VendorPaymentPurchaseItem for each purchase item
-          for (const item of purchase.purchaseItems) {
-            paymentPurchaseItems.push({
-              vendorPaymentId: newPayment.id,
-              purchaseItemId: item.id,
-            });
-          }
-
-          remainingPayment -= paymentForPurchase;
-        }
-      }
-
-      if (paymentPurchaseItems.length > 0) {
-        await tx.vendorPaymentPurchaseItem.createMany({
-          data: paymentPurchaseItems,
-        });
-      }
-
-      // Update vendor metrics
+      // Update vendor
       await tx.vendor.update({
         where: { id: Number(vendorId) },
         data: {
@@ -125,27 +72,43 @@ export async function POST(request) {
         },
       });
 
-      // Check if all selected purchases are cleared
-      const updatedPurchases = await tx.purchase.findMany({
-        where: { id: { in: purchaseIds.map(Number) } },
+      // Create payment history
+      const newPayment = await tx.vendorPaymentHistory.create({
+        data: {
+          vendorId: Number(vendorId),
+          date: new Date(date),
+          total: purchaseIds?.length > 0 ? numericAmountPaid : 0,
+          amountPaid: numericAmountPaid,
+          duesStatus: purchaseIds?.length > 0 && numericAmountPaid >= purchaseItems.reduce((sum, item) => sum + item.total, 0) ? 'CLEARED' : 'PENDING',
+          paymentHistoryLinks: purchaseItems.length > 0
+            ? {
+                create: purchaseItems.map((item) => ({
+                  purchaseItemId: item.id,
+                })),
+              }
+            : undefined,
+        },
       });
 
-      const allCleared = updatedPurchases.every(
-        (purchase) => purchase.totalAmount <= purchase.amountPaid
-      );
-
-      if (allCleared && purchaseIds.length > 0) {
-        await tx.vendorPaymentHistory.update({
-          where: { id: newPayment.id },
-          data: { duesStatus: 'CLEARED' },
-        });
-        newPayment.duesStatus = 'CLEARED';
-      } else if (vendor.balance - numericAmountPaid <= 0) {
-        await tx.vendorPaymentHistory.update({
-          where: { id: newPayment.id },
-          data: { duesStatus: 'CLEARED' },
-        });
-        newPayment.duesStatus = 'CLEARED';
+      // Update purchases if linked
+      if (purchaseIds?.length > 0) {
+        let remainingPayment = numericAmountPaid;
+        for (const purchaseId of purchaseIds) {
+          const purchase = await tx.purchase.findUnique({
+            where: { id: Number(purchaseId) },
+          });
+          const due = purchase.totalAmount - purchase.amountPaid;
+          const paymentToApply = Math.min(remainingPayment, due);
+          if (paymentToApply > 0) {
+            await tx.purchase.update({
+              where: { id: Number(purchaseId) },
+              data: {
+                amountPaid: { increment: paymentToApply },
+              },
+            });
+            remainingPayment -= paymentToApply;
+          }
+        }
       }
 
       return newPayment;
@@ -155,7 +118,7 @@ export async function POST(request) {
   } catch (error) {
     console.error('[VENDOR_PAYMENT_CREATE_ERROR]', error);
     return NextResponse.json(
-      { error: error.message || 'Failed to record vendor payment' },
+      { error: error.message || 'Failed to record payment' },
       { status: 500 }
     );
   }
