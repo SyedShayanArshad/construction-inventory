@@ -9,43 +9,48 @@ datasource db {
 }
 
 model Product {
-  id                Int       @id @default(autoincrement())
+  id                Int            @id @default(autoincrement())
   name              String
   unit              String
   quantity          Int
   lowStockThreshold Int
   category          String
-  saleItems         SaleItem[]
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+  cost              Float          @default(0)
   purchaseItems     PurchaseItem[]
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
+  saleItems         SaleItem[]
 }
-// Add to your existing schema.prisma
+
 model Customer {
   id          Int      @id @default(autoincrement())
   name        String
-  phoneNumber String?  // Optional
+  phoneNumber String?
   balance     Float    @default(0)
-  sales       Sale[]   // Link to sales
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  sales       Sale[]
 }
+
 model Sale {
-  id              Int            @id @default(autoincrement())
-  invoiceNumber   String         @unique
-  customerId      Int
-  customer        Customer       @relation(fields: [customerId], references: [id])
-  date            DateTime
-  saleItems       SaleItem[]
-  subTotal        Float
-  amountPaid      Float
-  paymentMethod   PaymentMethod
-  dueAmount       Float
-  status          SaleStatus     @default(PENDING)
-  paymentHistory  PaymentHistory[]
-  createdAt       DateTime       @default(now())
-  updatedAt       DateTime       @updatedAt
+  id             Int              @id @default(autoincrement())
+  invoiceNumber  String           @unique
+  date           DateTime
+  subTotal       Float
+  amountPaid     Float
+  paymentMethod  PaymentMethod
+  dueAmount      Float
+  status         SaleStatus       @default(PENDING)
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  customerId     Int
+  paymentHistory PaymentHistory[]
+  customer       Customer         @relation(fields: [customerId], references: [id])
+  saleItems      SaleItem[]
+
+  @@index([customerId], map: "Sale_customerId_fkey")
 }
+
 model SaleItem {
   id        Int      @id @default(autoincrement())
   saleId    Int
@@ -66,13 +71,14 @@ model SaleItem {
 model PaymentHistory {
   id                  Int      @id @default(autoincrement())
   saleId              Int
+  sale                Sale     @relation(fields: [saleId], references: [id], onDelete: Cascade)
   date                DateTime
   amountPaid          Float
   dueBeforePayment    Float
   balanceAfterPayment Float
+  paymentMethod       String?
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
-  sale                Sale     @relation(fields: [saleId], references: [id], onDelete: Cascade)
 
   @@index([saleId], map: "PaymentHistory_saleId_fkey")
 }
@@ -155,7 +161,13 @@ model VendorPaymentPurchaseItem {
   @@unique([vendorPaymentId, purchaseItemId])
   @@index([purchaseItemId], map: "VendorPaymentPurchaseItem_purchaseItemId_fkey")
 }
-
+model User {
+  id        Int      @id @default(autoincrement())
+  username  String   @unique
+  email     String   @unique
+  password  String
+  createdAt DateTime @default(now())
+}
 enum PaymentMethod {
   CASH
   BANK_TRANSFER

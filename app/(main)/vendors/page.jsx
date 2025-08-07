@@ -1,12 +1,12 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import AddVendorModal from '../components/AddVendorModal';
-import VendorTransactionsModal from '../components/VendorTransactionsModal';
-import AddVendorPaymentModal from '../components/AddVendorPaymentModal';
+import AddVendorModal from '../../components/AddVendorModal';
+import VendorTransactionsModal from '../../components/VendorTransactionsModal';
+import AddVendorPaymentModal from '../../components/AddVendorPaymentModal';
 import { formatCurrency } from '@/lib/utils';
 import toast from 'react-hot-toast';
-import Loading from '../components/Loading';
+import Loading from '../../components/Loading';
 
 export default function Vendors() {
   const [showAddVendorModal, setShowAddVendorModal] = useState(false);
@@ -163,7 +163,7 @@ export default function Vendors() {
   const totalBalanceDue = allVendors.reduce((sum, vendor) => sum + vendor.balance, 0);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 min-h-screen p-4 sm:p-6">
       {loading ? (
         <div className="flex items-center justify-center h-screen">
           <Loading />
@@ -171,10 +171,10 @@ export default function Vendors() {
       ) : (
         <>
           <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
-            <h1 className="text-2xl font-bold">Vendor Management</h1>
+            <h1 className="text-2xl font-bold text-gray-800 dark:text-white">Vendor Management</h1>
             <button
               onClick={() => setShowAddVendorModal(true)}
-              className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-5 py-2.5 rounded-md hover:from-blue-700 hover:to-blue-800 inline-flex items-center shadow-md hover:shadow-lg transition-all"
+              className="bg-gradient-to-r from-blue-600 to-blue-700 dark:from-blue-700 dark:to-blue-800 text-white px-5 py-2.5 rounded-md hover:from-blue-700 hover:to-blue-800 dark:hover:from-blue-800 dark:hover:to-blue-900 inline-flex items-center shadow-md hover:shadow-lg transition-all"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -192,23 +192,23 @@ export default function Vendors() {
             </button>
           </div>
 
-          <div className="bg-white p-5 rounded-lg shadow-lg">
+          <div className="bg-white dark:bg-gray-800 p-5 rounded-lg shadow-lg border border-gray-200 dark:border-gray-600">
             <div className="flex justify-between items-center mb-4">
               <div className="flex items-center">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
-                  className="h-6 w-6 text-blue-600 mr-2"
+                  className="h-6 w-6 text-blue-600 dark:text-blue-400 mr-2"
                   viewBox="0 0 20 20"
                   fill="currentColor"
                 >
                   <path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM14 11a1 1 0 011 1v1h1a1 1 0 110 2h-1v1a1 1 0 11-2 0v-1h-1a1 1 0 110-2h1v-1a1 1 0 011-1z" />
                 </svg>
-                <h2 className="text-xl font-medium text-gray-800">Vendors Summary</h2>
+                <h2 className="text-xl font-medium text-gray-800 dark:text-white">Vendors Summary</h2>
               </div>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-4 rounded-lg shadow border border-blue-200 flex items-center">
-                <div className="bg-blue-500 p-3 rounded-full mr-3">
+              <div className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900 dark:to-blue-800 p-4 rounded-lg shadow border border-blue-200 dark:border-blue-700 flex items-center">
+                <div className="bg-blue-500 dark:bg-blue-600 p-3 rounded-full mr-3">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     className="h-6 w-6 text-white"
@@ -219,12 +219,12 @@ export default function Vendors() {
                   </svg>
                 </div>
                 <div>
-                  <div className="text-sm font-medium text-blue-800">Total Vendors</div>
-                  <div className="text-2xl font-bold text-blue-900">{allVendors.length}</div>
+                  <div className="text-sm font-medium text-blue-800 dark:text-blue-200">Total Vendors</div>
+                  <div className="text-2xl font-bold text-blue-900 dark:text-blue-100">{allVendors.length}</div>
                 </div>
               </div>
-              <div className="bg-gradient-to-br from-green-50 to-green-100 p-4 rounded-lg shadow border border-green-200 flex items-center">
-                <div className="bg-green-500 p-3 rounded-full mr-3">
+              <div className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900 dark:to-green-800 p-4 rounded-lg shadow border border-green-200 dark:border-green-700 flex items-center">
+                <div className="bg-green-500 dark:bg-green-600 p-3 rounded-full mr-3">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     className="h-6 w-6 text-white"
@@ -240,12 +240,12 @@ export default function Vendors() {
                   </svg>
                 </div>
                 <div>
-                  <div className="text-sm font-medium text-green-800">Total Purchases</div>
-                  <div className="text-2xl font-bold text-green-900">{formatCurrency(totalPurchases)}</div>
+                  <div className="text-sm font-medium text-green-800 dark:text-green-200">Total Purchases</div>
+                  <div className="text-2xl font-bold text-green-900 dark:text-green-100">{formatCurrency(totalPurchases)}</div>
                 </div>
               </div>
-              <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 p-4 rounded-lg shadow border border-yellow-200 flex items-center">
-                <div className="bg-yellow-500 p-3 rounded-full mr-3">
+              <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 dark:from-yellow-900 dark:to-yellow-800 p-4 rounded-lg shadow border border-yellow-200 dark:border-yellow-700 flex items-center">
+                <div className="bg-yellow-500 dark:bg-yellow-600 p-3 rounded-full mr-3">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     className="h-6 w-6 text-white"
@@ -260,12 +260,12 @@ export default function Vendors() {
                   </svg>
                 </div>
                 <div>
-                  <div className="text-sm font-medium text-yellow-800">Total Transactions</div>
-                  <div className="text-2xl font-bold text-yellow-900">{totalTransactions}</div>
+                  <div className="text-sm font-medium text-yellow-800 dark:text-yellow-200">Total Transactions</div>
+                  <div className="text-2xl font-bold text-yellow-900 dark:text-yellow-100">{totalTransactions}</div>
                 </div>
               </div>
-              <div className="bg-gradient-to-br from-red-50 to-red-100 p-4 rounded-lg shadow border border-red-200 flex items-center">
-                <div className="bg-red-500 p-3 rounded-full mr-3">
+              <div className="bg-gradient-to-br from-red-50 to-red-100 dark:from-red-900 dark:to-red-800 p-4 rounded-lg shadow border border-red-200 dark:border-red-700 flex items-center">
+                <div className="bg-red-500 dark:bg-red-600 p-3 rounded-full mr-3">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     className="h-6 w-6 text-white"
@@ -280,18 +280,18 @@ export default function Vendors() {
                   </svg>
                 </div>
                 <div>
-                  <div className="text-sm font-medium text-red-800">Total Balance Due</div>
-                  <div className="text-2xl font-bold text-red-900">{formatCurrency(totalBalanceDue)}</div>
+                  <div className="text-sm font-medium text-red-800 dark:text-red-200">Total Balance Due</div>
+                  <div className="text-2xl font-bold text-red-900 dark:text-red-100">{formatCurrency(totalBalanceDue)}</div>
                 </div>
               </div>
             </div>
           </div>
 
-          <div className="bg-white p-5 rounded-lg shadow-lg">
+          <div className="bg-white dark:bg-gray-800 p-5 rounded-lg shadow-lg border border-gray-200 dark:border-gray-600">
             <div className="flex items-center mb-4">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                className="h-5 w-5 text-blue-600 mr-2"
+                className="h-5 w-5 text-blue-600 dark:text-blue-400 mr-2"
                 viewBox="0 0 20 20"
                 fill="currentColor"
               >
@@ -301,14 +301,14 @@ export default function Vendors() {
                   clipRule="evenodd"
                 />
               </svg>
-              <h3 className="text-lg font-medium text-gray-800">Search Vendors</h3>
+              <h3 className="text-lg font-medium text-gray-800 dark:text-white">Search Vendors</h3>
             </div>
 
-            <div className="relative bg-gray-50 rounded-md border border-gray-200 transition-all hover:border-blue-300 mb-4">
+            <div className="relative bg-gray-50 dark:bg-gray-700 rounded-md border border-gray-200 dark:border-gray-600 transition-all hover:border-blue-300 dark:hover:border-blue-600 mb-4">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
-                  className="h-5 w-5 text-gray-400"
+                  className="h-5 w-5 text-gray-400 dark:text-gray-300"
                   viewBox="0 0 20 20"
                   fill="currentColor"
                 >
@@ -324,13 +324,13 @@ export default function Vendors() {
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="Search by name or phone number..."
-                className="pl-10 w-full px-3 py-2 border-0 rounded-md bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
+                className="pl-10 w-full px-3 py-2 border-0 rounded-md bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-colors"
               />
               {searchTerm && (
                 <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
                   <button
                     onClick={() => setSearchTerm('')}
-                    className="text-gray-400 hover:text-gray-600 focus:outline-none"
+                    className="text-gray-400 dark:text-gray-300 hover:text-gray-600 dark:hover:text-gray-100 focus:outline-none"
                   >
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
@@ -350,7 +350,7 @@ export default function Vendors() {
             </div>
 
             <div className="flex items-center mb-4">
-              <div className="text-sm text-gray-500">
+              <div className="text-sm text-gray-500 dark:text-gray-300">
                 {filteredVendors.length === 0
                   ? 'No vendors found'
                   : filteredVendors.length === 1
@@ -368,21 +368,21 @@ export default function Vendors() {
               }}
             >
               <table className="w-full table-auto">
-                <thead className="bg-gradient-to-r from-gray-50 to-gray-100">
+                <thead className="bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-700">
                   <tr>
-                    <th className="py-4 pl-4 pr-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="py-4 pl-4 pr-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                       Vendor
                     </th>
-                    <th className="px-3 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-3 py-4 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                       Phone
                     </th>
-                    <th className="px-3 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-3 py-4 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                       Total Purchases
                     </th>
-                    <th className="px-3 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-3 py-4 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                       Total Paid
                     </th>
-                    <th className="px-3 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-3 py-4 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                       Balance Due
                     </th>
                     <th className="relative py-4 pl-3 pr-4">
@@ -390,39 +390,39 @@ export default function Vendors() {
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-200 bg-white">
+                <tbody className="divide-y divide-gray-200 dark:divide-gray-600 bg-white dark:bg-gray-800">
                   {filteredVendors.map((vendor) => (
-                    <tr key={vendor.id} className="hover:bg-gray-50 transition-colors">
-                      <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900">
+                    <tr key={vendor.id} className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                      <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 dark:text-gray-100">
                         {vendor.name}
                         {vendor.address && (
-                          <div className="text-xs text-gray-500 truncate max-w-xs">
+                          <div className="text-xs text-gray-500 dark:text-gray-300 truncate max-w-xs">
                             {vendor.address}
                           </div>
                         )}
                       </td>
-                      <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                      <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500 dark:text-gray-300">
                         {vendor.phoneNumber || '-'}
                       </td>
                       <td className="whitespace-nowrap px-3 py-4">
-                        <div className="text-sm font-medium text-gray-900">
+                        <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
                           {formatCurrency(vendor.totalPurchases)}
                         </div>
-                        <div className="text-xs text-gray-500">
+                        <div className="text-xs text-gray-500 dark:text-gray-300">
                           {vendor._count.purchases} transactions
                         </div>
                       </td>
-                      <td className="whitespace-nowrap px-3 py-4 text-sm font-medium text-green-600">
+                      <td className="whitespace-nowrap px-3 py-4 text-sm font-medium text-green-600 dark:text-green-400">
                         {formatCurrency(vendor.amountPaid)}
                       </td>
-                      <td className="whitespace-nowrap px-3 py-4 text-sm font-medium text-red-600">
+                      <td className="whitespace-nowrap px-3 py-4 text-sm font-medium text-red-600 dark:text-red-400">
                         {formatCurrency(vendor.balance)}
                       </td>
                       <td className="whitespace-nowrap text-right text-sm font-medium px-3 py-4">
                         <div className="flex justify-end space-x-2">
                           <button
                             onClick={() => viewTransactions(vendor)}
-                            className="text-blue-600 hover:text-blue-800 transition-colors p-1.5 rounded-full hover:bg-blue-50"
+                            className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 transition-colors p-1.5 rounded-full hover:bg-blue-50 dark:hover:bg-blue-900/50"
                             title="View Transaction History"
                           >
                             <svg
@@ -444,7 +444,7 @@ export default function Vendors() {
                               setEditingVendor({ ...vendor });
                               setShowEditVendorModal(true);
                             }}
-                            className="text-green-600 hover:text-green-800 transition-colors p-1.5 rounded-full hover:bg-green-50"
+                            className="text-green-600 dark:text-green-400 hover:text-green-800 dark:hover:text-green-300 transition-colors p-1.5 rounded-full hover:bg-green-50 dark:hover:bg-green-900/50"
                             title="Edit Vendor"
                           >
                             <svg
@@ -458,7 +458,7 @@ export default function Vendors() {
                           </button>
                           <button
                             onClick={() => handleDeleteVendor(vendor)}
-                            className="text-red-600 hover:text-red-800 transition-colors p-1.5 rounded-full hover:bg-red-50"
+                            className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 transition-colors p-1.5 rounded-full hover:bg-red-50 dark:hover:bg-red-900/50"
                             title="Delete Vendor"
                           >
                             <svg
@@ -476,7 +476,7 @@ export default function Vendors() {
                           </button>
                           <button
                             onClick={() => handlePayVendor(vendor)}
-                            className="text-green-600 hover:text-green-800 transition-colors p-1.5 rounded-full hover:bg-green-50"
+                            className="text-green-600 dark:text-green-400 hover:text-green-800 dark:hover:text-green-300 transition-colors p-1.5 rounded-full hover:bg-green-50 dark:hover:bg-green-900/50"
                             title="Pay Vendor Dues"
                           >
                             <svg
@@ -502,30 +502,12 @@ export default function Vendors() {
             </div>
           </div>
 
-          {/* Add Vendor Modal */}
-          {showAddVendorModal && (
-            <AddVendorModal
-              onClose={() => setShowAddVendorModal(false)}
-              onSubmit={handleAddVendor}
-              mode="add"
-            />
-          )}
-          {/* Edit Vendor Modal */}
-          {showEditVendorModal && editingVendor && (
-            <AddVendorModal
-              onClose={() => setShowEditVendorModal(false)}
-              onSubmit={handleUpdateVendor}
-              vendor={editingVendor}
-              mode="edit"
-            />
-          )}
-
           {/* Delete Confirmation Modal */}
           {showDeleteConfirmModal && selectedVendor && (
-            <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
-              <div className="bg-gradient-to-b from-white to-gray-50 rounded-xl shadow-2xl p-6 max-w-md w-full border border-gray-200">
+            <div className="fixed inset-0 bg-black/40 dark:bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
+              <div className="bg-gradient-to-b from-white to-gray-50 dark:from-gray-800 dark:to-gray-700 rounded-xl shadow-2xl p-6 max-w-md w-full border border-gray-200 dark:border-gray-600">
                 <div className="flex items-center mb-4">
-                  <div className="bg-gradient-to-br from-red-500 to-red-600 p-2 rounded-full text-white shadow-md mr-3">
+                  <div className="bg-gradient-to-br from-red-500 to-red-600 dark:from-red-600 dark:to-red-700 p-2 rounded-full text-white shadow-md mr-3">
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
                       className="h-6 w-6"
@@ -539,24 +521,24 @@ export default function Vendors() {
                       />
                     </svg>
                   </div>
-                  <h2 className="text-xl font-bold text-red-600">Confirm Deletion</h2>
+                  <h2 className="text-xl font-bold text-red-600 dark:text-red-400">Confirm Deletion</h2>
                 </div>
 
-                <p className="mb-6 text-gray-700">
+                <p className="mb-6 text-gray-700 dark:text-gray-300">
                   Are you sure you want to delete vendor{' '}
-                  <span className="font-bold">{selectedVendor.name}</span>? This action cannot be undone.
+                  <span className="font-bold text-gray-900 dark:text-gray-100">{selectedVendor.name}</span>? This action cannot be undone.
                 </p>
 
                 <div className="flex justify-end space-x-3">
                   <button
                     onClick={() => setShowDeleteConfirmModal(false)}
-                    className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+                    className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 transition-colors"
                   >
                     Cancel
                   </button>
                   <button
                     onClick={confirmDeleteVendor}
-                    className="px-4 py-2.5 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-md hover:from-red-700 hover:to-red-800 transition-colors flex items-center shadow-md hover:shadow-lg"
+                    className="px-4 py-2.5 bg-gradient-to-r from-red-600 to-red-700 dark:from-red-700 dark:to-red-800 text-white rounded-md hover:from-red-700 hover:to-red-800 dark:hover:from-red-800 dark:hover:to-red-900 transition-colors flex items-center shadow-md hover:shadow-lg"
                   >
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
@@ -575,6 +557,24 @@ export default function Vendors() {
                 </div>
               </div>
             </div>
+          )}
+
+          {/* Add Vendor Modal */}
+          {showAddVendorModal && (
+            <AddVendorModal
+              onClose={() => setShowAddVendorModal(false)}
+              onSubmit={handleAddVendor}
+              mode="add"
+            />
+          )}
+          {/* Edit Vendor Modal */}
+          {showEditVendorModal && editingVendor && (
+            <AddVendorModal
+              onClose={() => setShowEditVendorModal(false)}
+              onSubmit={handleUpdateVendor}
+              vendor={editingVendor}
+              mode="edit"
+            />
           )}
 
           {/* Vendor Transactions Modal */}

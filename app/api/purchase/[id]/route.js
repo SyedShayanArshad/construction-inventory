@@ -1,8 +1,16 @@
-// app/api/purchases/[id]/route.js
+// app/api/purchase/[id]/route.js
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { getServerSession } from "next-auth";
 
 export async function GET(request, { params }) {
+  const session = await getServerSession();
+    if (!session) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
   try {
     const { id } = params; // this is vendorId
     const purchases = await prisma.purchase.findMany({

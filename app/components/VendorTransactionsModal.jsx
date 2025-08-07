@@ -1,5 +1,6 @@
+'use client';
+
 import React, { useState, useEffect } from 'react';
-import { formatCurrency } from '@/lib/utils';
 import Loading from './Loading';
 import toast from 'react-hot-toast';
 
@@ -71,11 +72,11 @@ function VendorTransactionsModal({ vendor, onClose, getVendorPurchases, formatCu
   const renderSortIcon = (key) => {
     if (sortConfig.key !== key) return null;
     return sortConfig.direction === 'asc' ? (
-      <svg className="h-4 w-4 inline ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <svg className="h-4 w-4 inline ml-1 text-gray-500 dark:text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
       </svg>
     ) : (
-      <svg className="h-4 w-4 inline ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <svg className="h-4 w-4 inline ml-1 text-gray-500 dark:text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
       </svg>
     );
@@ -84,11 +85,11 @@ function VendorTransactionsModal({ vendor, onClose, getVendorPurchases, formatCu
   const isLoading = tab === 'purchases' ? loadingPurchases : loadingPayments;
 
   return (
-    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
-      <div className="bg-gradient-to-b from-white to-gray-50 rounded-xl shadow-2xl p-6 max-w-4xl w-full border border-gray-200">
+    <div className="fixed inset-0 bg-black/40 dark:bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
+      <div className="bg-gradient-to-b from-white to-gray-50 dark:from-gray-800 dark:to-gray-700 rounded-xl shadow-2xl p-6 max-w-4xl w-full border border-gray-200 dark:border-gray-600">
         <div className="flex justify-between items-center mb-6">
           <div className="flex items-center space-x-3">
-            <div className="bg-gradient-to-br from-blue-500 to-blue-600 p-2 rounded-full text-white shadow-md">
+            <div className="bg-gradient-to-br from-blue-500 to-blue-600 dark:from-blue-600 dark:to-blue-700 p-2 rounded-full text-white shadow-md">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 className="h-6 w-6"
@@ -98,11 +99,11 @@ function VendorTransactionsModal({ vendor, onClose, getVendorPurchases, formatCu
                 <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" />
               </svg>
             </div>
-            <h2 className="text-xl font-bold text-gray-800">{vendor.name} Transactions</h2>
+            <h2 className="text-xl font-bold text-gray-800 dark:text-white">{vendor.name} Transactions</h2>
           </div>
           <button
             onClick={onClose}
-            className="text-gray-500 hover:text-gray-700 transition-colors p-1 hover:bg-gray-100 rounded-full"
+            className="text-gray-500 dark:text-gray-300 hover:text-gray-700 dark:hover:text-gray-100 transition-colors p-1 hover:bg-gray-100 dark:hover:bg-gray-600 rounded-full"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -117,15 +118,15 @@ function VendorTransactionsModal({ vendor, onClose, getVendorPurchases, formatCu
         </div>
 
         <div className="mb-4">
-          <div className="flex border-b border-gray-200">
+          <div className="flex border-b border-gray-200 dark:border-gray-600">
             <button
-              className={`px-4 py-2 text-sm font-medium ${tab === 'purchases' ? 'border-b-2 border-blue-500 text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
+              className={`px-4 py-2 text-sm font-medium ${tab === 'purchases' ? 'border-b-2 border-blue-500 text-blue-600 dark:border-blue-400 dark:text-blue-400' : 'text-gray-500 dark:text-gray-300 hover:text-gray-700 dark:hover:text-gray-100'}`}
               onClick={() => setTab('purchases')}
             >
               Purchases
             </button>
             <button
-              className={`px-4 py-2 text-sm font-medium ${tab === 'payments' ? 'border-b-2 border-blue-500 text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
+              className={`px-4 py-2 text-sm font-medium ${tab === 'payments' ? 'border-b-2 border-blue-500 text-blue-600 dark:border-blue-400 dark:text-blue-400' : 'text-gray-500 dark:text-gray-300 hover:text-gray-700 dark:hover:text-gray-100'}`}
               onClick={() => setTab('payments')}
             >
               Payment History
@@ -141,53 +142,53 @@ function VendorTransactionsModal({ vendor, onClose, getVendorPurchases, formatCu
           <div className="max-h-[60vh] overflow-y-auto scrollbar-thin">
             {tab === 'purchases' ? (
               purchases.length === 0 ? (
-                <p className="text-center text-gray-500 py-10">No purchases found for this vendor.</p>
+                <p className="text-center text-gray-500 dark:text-gray-300 py-10">No purchases found for this vendor.</p>
               ) : (
                 <table className="w-full table-auto">
-                  <thead className="bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0">
+                  <thead className="bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-700 sticky top-0">
                     <tr>
                       <th
-                        className="py-3 pl-4 pr-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
+                        className="py-3 pl-4 pr-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer"
                         onClick={() => handleSort('id')}
                       >
                         ID {renderSortIcon('id')}
                       </th>
                       <th
-                        className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
+                        className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer"
                         onClick={() => handleSort('date')}
                       >
                         Date {renderSortIcon('date')}
                       </th>
-                      <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                         Items
                       </th>
                       <th
-                        className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
+                        className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer"
                         onClick={() => handleSort('totalAmount')}
                       >
                         Total {renderSortIcon('totalAmount')}
                       </th>
                       <th
-                        className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
+                        className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer"
                         onClick={() => handleSort('amountPaid')}
                       >
                         Paid {renderSortIcon('amountPaid')}
                       </th>
-                      <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                         Due
                       </th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-200 bg-white">
+                  <tbody className="divide-y divide-gray-200 dark:divide-gray-600 bg-white dark:bg-gray-800">
                     {sortedData(purchases, sortConfig.key, sortConfig.direction).map((purchase) => (
-                      <tr key={purchase.id} className="hover:bg-gray-50 transition-colors">
-                        <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm text-gray-900">
+                      <tr key={purchase.id} className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                        <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm text-gray-900 dark:text-gray-100">
                           #{purchase.id}
                         </td>
-                        <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                        <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500 dark:text-gray-300">
                           {new Date(purchase.date).toLocaleDateString()}
                         </td>
-                        <td className="px-3 py-4 text-sm text-gray-500">
+                        <td className="px-3 py-4 text-sm text-gray-500 dark:text-gray-300">
                           {purchase.purchaseItems?.length > 0 ? (
                             purchase.purchaseItems.map((item) => (
                               <div key={item.id}>
@@ -198,13 +199,13 @@ function VendorTransactionsModal({ vendor, onClose, getVendorPurchases, formatCu
                             <div>No items</div>
                           )}
                         </td>
-                        <td className="whitespace-nowrap px-3 py-4 text-sm font-medium text-gray-900">
+                        <td className="whitespace-nowrap px-3 py-4 text-sm font-medium text-gray-900 dark:text-gray-100">
                           {formatCurrency(purchase.totalAmount)}
                         </td>
-                        <td className="whitespace-nowrap px-3 py-4 text-sm font-medium text-green-600">
+                        <td className="whitespace-nowrap px-3 py-4 text-sm font-medium text-green-600 dark:text-green-400">
                           {formatCurrency(purchase.amountPaid)}
                         </td>
-                        <td className="whitespace-nowrap px-3 py-4 text-sm font-medium text-red-600">
+                        <td className="whitespace-nowrap px-3 py-4 text-sm font-medium text-red-600 dark:text-red-400">
                           {formatCurrency(purchase.totalAmount - purchase.amountPaid)}
                         </td>
                       </tr>
@@ -214,58 +215,56 @@ function VendorTransactionsModal({ vendor, onClose, getVendorPurchases, formatCu
               )
             ) : (
               paymentHistory.length === 0 ? (
-                <p className="text-center text-gray-500 py-10">No payment history found for this vendor.</p>
+                <p className="text-center text-gray-500 dark:text-gray-300 py-10">No payment history found for this vendor.</p>
               ) : (
                 <table className="w-full table-auto">
-                  <thead className="bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0">
-                    <tr>
-                      <th
-                        className="py-3 pl-4 pr-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
-                        onClick={() => handleSort('id')}
-                      >
-                        ID {renderSortIcon('id')}
-                      </th>
-                      <th
-                        className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
-                        onClick={() => handleSort('date')}
-                      >
-                        Date {renderSortIcon('date')}
-                      </th>
-                      <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Amount Paid
-                      </th>
-                      <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Status
-                      </th>
-                      <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Linked Purchases
-                      </th>
-                    </tr>
+                  <thead className="bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-700 sticky top-0">
+                    <th
+                      className="py-3 pl-4 pr-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer"
+                      onClick={() => handleSort('id')}
+                    >
+                      ID {renderSortIcon('id')}
+                    </th>
+                    <th
+                      className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer"
+                      onClick={() => handleSort('date')}
+                    >
+                      Date {renderSortIcon('date')}
+                    </th>
+                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                      Amount Paid
+                    </th>
+                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                      Status
+                    </th>
+                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                      Linked Purchases
+                    </th>
                   </thead>
-                  <tbody className="divide-y divide-gray-200 bg-white">
+                  <tbody className="divide-y divide-gray-200 dark:divide-gray-600 bg-white dark:bg-gray-800">
                     {sortedData(paymentHistory, sortConfig.key, sortConfig.direction).map((payment) => (
-                      <tr key={payment.id} className="hover:bg-gray-50 transition-colors">
-                        <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm text-gray-900">
+                      <tr key={payment.id} className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                        <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm text-gray-900 dark:text-gray-100">
                           #{payment.id}
                         </td>
-                        <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                        <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500 dark:text-gray-300">
                           {new Date(payment.date).toLocaleDateString()}
                         </td>
-                        <td className="whitespace-nowrap px-3 py-4 text-sm font-medium text-green-600">
+                        <td className="whitespace-nowrap px-3 py-4 text-sm font-medium text-green-600 dark:text-green-400">
                           {formatCurrency(payment.amountPaid)}
                         </td>
                         <td className="whitespace-nowrap px-3 py-4 text-sm">
                           <span
                             className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                               payment.duesStatus === 'CLEARED'
-                                ? 'bg-green-100 text-green-800'
-                                : 'bg-yellow-100 text-yellow-800'
+                                ? 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-400'
+                                : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-200'
                             }`}
                           >
                             {payment.duesStatus}
                           </span>
                         </td>
-                        <td className="px-3 py-4 text-sm text-gray-500">
+                        <td className="px-3 py-4 text-sm text-gray-500 dark:text-gray-300">
                           {payment.vendorPaymentPurchaseItems?.length > 0 ? (
                             payment.vendorPaymentPurchaseItems.map((item) => (
                               <div key={item.id}>

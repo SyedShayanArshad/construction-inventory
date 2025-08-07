@@ -1,134 +1,186 @@
-import React, { useState } from "react";
+
+'use client';
+
+import React, { useState, useEffect } from "react";
 import SaleItemsTable from "./SaleItemsTable";
 import { formatCurrency } from "@/lib/utils";
-function AddNewSaleModal({ onClose }) {
+import toast from "react-hot-toast";
+import Loading from "./Loading";
+
+function AddNewSaleModal({ onClose, onSubmit }) {
   const [newSale, setNewSale] = useState({
+    customerId: "",
     customerName: "",
     customerPhone: "",
-    items: [{ productId: "", quantity: "", price: "", discount: "" }],
+    items: [{ productId: "", quantity: "", unitPrice: "", discount: "" }],
     paid: "",
     date: new Date().toISOString().split("T")[0],
-    invoiceNumber: `INV-${new Date().getFullYear()}-${Math.floor(
-      Math.random() * 10000
-    )
-      .toString()
-      .padStart(4, "0")}`,
-    paymentMethod: "Cash",
+    paymentMethod: "CASH",
   });
+  const [customers, setCustomers] = useState([]);
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [searchCustomer, setSearchCustomer] = useState("");
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        const [customersRes, productsRes] = await Promise.all([
+          fetch("/api/customers"),
+          fetch("/api/sales/purchaseItems"),
+        ]);
+
+        if (!customersRes.ok || !productsRes.ok) {
+          throw new Error("Failed to fetch data");
+        }
+
+        const customersData = await customersRes.json();
+        const productsData = await productsRes.json();
+
+        setCustomers(customersData);
+        setProducts(productsData);
+      } catch (error) {
+        toast.error("Failed to load customers or products");
+        console.error("Error fetching data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
 
   const calculateSubtotal = () => {
     return newSale.items.reduce((total, item) => {
-      if (item.productId && item.quantity && item.price) {
-        const itemPrice = parseFloat(item.price);
-        const itemQuantity = parseFloat(item.quantity);
-        const discountAmount = parseFloat(item.discount || 0);
-        const itemTotal = itemQuantity * itemPrice - discountAmount;
+      if (item.productId && item.quantity && item.unitPrice) {
+        const itemTotal = item.quantity * item.unitPrice - (item.discount || 0);
         return total + itemTotal;
       }
       return total;
     }, 0);
   };
+
   const subtotal = calculateSubtotal();
-  const due = subtotal - (parseFloat(newSale.paid) || 0);
+  const due = subtotal - (Number(newSale.paid) || 0);
+
   const addItemToSale = () => {
     setNewSale({
       ...newSale,
       items: [
         ...newSale.items,
-        { productId: "", quantity: "", price: "", discount: "" },
+        { productId: "", quantity: "", unitPrice: "", discount: "" },
       ],
     });
   };
-  const handleAddNewSale = (e) => {
-    e.preventDefault();
-    // In a real app, this would save to a database
-    // Create a new sale object with appropriate ID and properties
-    const sale = {
-      id: newSale.invoiceNumber,
-      customerName: newSale.customerName,
-      customerPhone: newSale.customerPhone,
-      items: newSale.items.map((item) => ({
-        productId: item.productId,
-        quantity: parseFloat(item.quantity),
-        price: parseFloat(item.price),
-        discount: parseFloat(item.discount || 0),
-      })),
-      total: subtotal,
-      paid: parseFloat(newSale.paid) || 0,
-      due: due,
-      date: newSale.date,
-      status: due <= 0 ? "completed" : due < subtotal ? "partial" : "unpaid",
-      // Add payment history for tracking all payments
-      paymentHistory:
-        parseFloat(newSale.paid) > 0
-          ? [
-              {
-                amount: parseFloat(newSale.paid),
-                date: new Date().toISOString(),
-                remainingBalance: due,
-                paymentMethod: newSale.paymentMethod,
-                notes: "Initial payment",
-              },
-            ]
-          : [],
-    };
 
-    // Set the created sale as selected sale for viewing
-    setSelectedSale(sale);
-
-    // Add the new sale to the current month's sales
-    setCurrentMonthSales([...currentMonthSales, sale]);
-
-    // Close the new sale modal and open the sale details modal
-    setShowNewSaleModal(false);
-    setShowSaleDetailsModal(true);
-
-    // Reset form for next use
-    setNewSale({
-      customerName: "",
-      customerPhone: "",
-      items: [{ productId: "", quantity: "", price: "", discount: "" }],
-      paid: "",
-      date: new Date().toISOString().split("T")[0],
-      invoiceNumber: `INV-${new Date().getFullYear()}-${Math.floor(
-        Math.random() * 10000
-      )
-        .toString()
-        .padStart(4, "0")}`,
-      paymentMethod: "Cash",
-    });
-  };
   const removeItemFromSale = (index) => {
     const updatedItems = [...newSale.items];
     updatedItems.splice(index, 1);
-    setNewSale({
-      ...newSale,
-      items: updatedItems,
-    });
+    setNewSale({ ...newSale, items: updatedItems });
   };
+
   const updateSaleItem = (index, field, value) => {
     const updatedItems = [...newSale.items];
     updatedItems[index][field] = value;
 
-    // If product is changed, update price
     if (field === "productId" && value) {
-      const product = getProductById(value);
+      const product = products.find((p) => p.id === Number(value));
       if (product) {
-        updatedItems[index].price = product.price.toString();
+        updatedItems[index].unitPrice = product.price.toString();
+        updatedItems[index].quantity = updatedItems[index].quantity || "1";
       }
     }
 
-    setNewSale({
-      ...newSale,
-      items: updatedItems,
-    });
+    setNewSale({ ...newSale, items: updatedItems });
   };
+
+  const isFormValid = () => {
+    const hasValidItems = newSale.items.some(
+      (item) =>
+        item.productId &&
+        Number(item.productId) > 0 &&
+        item.quantity &&
+        Number(item.quantity) > 0 &&
+        item.unitPrice &&
+        Number(item.unitPrice) > 0
+    );
+    return newSale.customerName && newSale.date && hasValidItems;
+  };
+
+  const handleAddNewSale = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      const items = newSale.items.filter(
+        (item) =>
+          item.productId &&
+          Number(item.productId) > 0 &&
+          item.quantity &&
+          Number(item.quantity) > 0 &&
+          item.unitPrice &&
+          Number(item.unitPrice) > 0
+      );
+
+      if (items.length === 0) {
+        throw new Error("At least one valid item is required");
+      }
+
+      const saleData = {
+        customerId: newSale.customerId ? Number(newSale.customerId) : null,
+        customerName: newSale.customerName,
+        customerPhone: newSale.customerPhone,
+        date: newSale.date,
+        items: items.map((item) => ({
+          productId: Number(item.productId),
+          quantity: Number(item.quantity),
+          unitPrice: Number(item.unitPrice),
+          discount: Number(item.discount) || 0,
+        })),
+        paid: newSale.paid,
+        paymentMethod: newSale.paymentMethod,
+      };
+
+      const response = await fetch("/api/sales", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(saleData),
+      });
+
+      if (!response.ok) {
+        const { error } = await response.json();
+        throw new Error(error);
+      }
+
+      toast.success("Sale recorded successfully!");
+      onSubmit();
+      onClose();
+    } catch (error) {
+      toast.error(error.message || "Failed to record sale");
+      console.error("Error recording sale:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const filteredCustomers = customers.filter((c) =>
+    c.name.toLowerCase().includes(searchCustomer.toLowerCase())
+  );
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-64 bg-gray-50 dark:bg-gray-900">
+        <Loading />
+      </div>
+    );
+  }
+
   return (
-    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-2 sm:p-4">
-      <div className="bg-gradient-to-b from-white to-gray-50 rounded-xl shadow-2xl w-full max-w-4xl border border-gray-200 max-h-[90vh] overflow-y-auto">
-        <div className="flex justify-between items-center p-4 sm:p-6 border-b sticky top-0 bg-gradient-to-b from-white to-gray-50 z-10">
+    <div className="fixed inset-0 bg-black/40 dark:bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-2 sm:p-4">
+      <div className="bg-gradient-to-b from-white to-gray-50 dark:from-gray-800 dark:to-gray-700 rounded-xl shadow-2xl w-full max-w-4xl border border-gray-200 dark:border-gray-600 max-h-[90vh] overflow-y-auto">
+        <div className="flex justify-between items-center p-4 sm:p-6 border-b sticky top-0 bg-gradient-to-b from-white to-gray-50 dark:from-gray-800 dark:to-gray-700 z-10">
           <div className="flex items-center">
-            <div className="bg-gradient-to-br from-blue-500 to-blue-600 p-2 rounded-full text-white shadow-md mr-2">
+            <div className="bg-gradient-to-br from-blue-500 to-blue-600 dark:from-blue-600 dark:to-blue-700 p-2 rounded-full text-white shadow-md mr-2">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 className="h-5 w-5"
@@ -138,11 +190,12 @@ function AddNewSaleModal({ onClose }) {
                 <path d="M3 1a1 1 0 000 2h1.22l.305 1.222a.997.997 0 00.01.042l1.358 5.43-.893.892C3.74 11.846 4.632 14 6.414 14H15a1 1 0 000-2H6.414l1-1H14a1 1 0 00.894-.553l3-6A1 1 0 0017 3H6.28l-.31-1.243A1 1 0 005 1H3zM16 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM6.5 18a1.5 1.5 0 100-3 1.5 1.5 0 000 3z" />
               </svg>
             </div>
-            <h3 className="text-lg font-medium text-gray-800">New Sale</h3>
+            <h3 className="text-lg font-medium text-gray-800 dark:text-white">New Sale</h3>
           </div>
           <button
             onClick={onClose}
-            className="text-gray-500 hover:text-gray-700 p-1 hover:bg-gray-100 rounded-full transition-colors"
+            className="text-gray-500 dark:text-gray-300 hover:text-gray-700 dark:hover:text-gray-100 p-1 hover:bg-gray-100 dark:hover:bg-gray-600 rounded-full transition-colors"
+            disabled={loading}
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -165,32 +218,61 @@ function AddNewSaleModal({ onClose }) {
           <form onSubmit={handleAddNewSale}>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Customer Name
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Customer
                 </label>
-                <input
-                  type="text"
-                  required
-                  value={newSale.customerName || ""}
-                  onChange={(e) =>
-                    setNewSale({ ...newSale, customerName: e.target.value })
-                  }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                  placeholder="Enter customer name"
-                />
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={searchCustomer}
+                    onChange={(e) => {
+                      setSearchCustomer(e.target.value);
+                      setNewSale({
+                        ...newSale,
+                        customerId: "",
+                        customerName: e.target.value,
+                        customerPhone: "",
+                      });
+                    }}
+                    placeholder="Search or enter customer name"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 transition-colors"
+                    required
+                  />
+                  {searchCustomer && filteredCustomers.length > 0 && (
+                    <ul className="absolute z-10 w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-md mt-1 max-h-40 overflow-y-auto">
+                      {filteredCustomers.map((customer) => (
+                        <li
+                          key={customer.id}
+                          className="px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer text-gray-900 dark:text-gray-100"
+                          onClick={() => {
+                            setNewSale({
+                              ...newSale,
+                              customerId: customer.id,
+                              customerName: customer.name,
+                              customerPhone: customer.phoneNumber || "",
+                            });
+                            setSearchCustomer("");
+                          }}
+                        >
+                          {customer.name}{" "}
+                          {customer.phoneNumber && `(${customer.phoneNumber})`}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Phone Number{" "}
-                  <span className="text-gray-400 text-xs">(Optional)</span>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Phone Number <span className="text-gray-400 dark:text-gray-500 text-xs">(Optional)</span>
                 </label>
                 <input
                   type="tel"
-                  value={newSale.customerPhone || ""}
+                  value={newSale.customerPhone}
                   onChange={(e) =>
                     setNewSale({ ...newSale, customerPhone: e.target.value })
                   }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 transition-colors"
                   placeholder="+92 XXX-XXXXXXX"
                 />
               </div>
@@ -198,42 +280,27 @@ function AddNewSaleModal({ onClose }) {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Date
                 </label>
                 <input
                   type="date"
                   required
                   value={newSale.date}
-                  onChange={(e) =>
-                    setNewSale({ ...newSale, date: e.target.value })
-                  }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                  onChange={(e) => setNewSale({ ...newSale, date: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 transition-colors"
                 />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Invoice Number
-                </label>
-                <input
-                  type="text"
-                  readOnly
-                  value={newSale.invoiceNumber}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-500 focus:outline-none"
-                />
-                <p className="text-xs text-gray-500 mt-1">
-                  Auto-generated invoice number
-                </p>
               </div>
             </div>
 
             <div className="mb-6">
               <div className="flex justify-between items-center mb-3">
-                <h3 className="font-medium text-gray-900">Sale Items</h3>
+                <h3 className="font-medium text-gray-900 dark:text-white">Sale Items</h3>
                 <button
                   type="button"
                   onClick={addItemToSale}
-                  className="text-blue-600 hover:text-blue-800 text-sm inline-flex items-center bg-blue-50 px-2 py-1 rounded-md transition-colors"
+                  className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 text-sm inline-flex items-center bg-blue-50 dark:bg-blue-900/50 px-2 py-1 rounded-md transition-colors"
+                  disabled={loading}
                 >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -253,61 +320,54 @@ function AddNewSaleModal({ onClose }) {
 
               <SaleItemsTable
                 items={newSale.items}
+                products={products}
                 updateSaleItem={updateSaleItem}
                 removeItemSale={removeItemFromSale}
+                disabled={loading}
               />
             </div>
 
-            <div className="border-t pt-4 mb-6">
+            <div className="border-t pt-4 mb-6 border-gray-200 dark:border-gray-600">
               <div className="flex justify-end">
-                <div className="w-full sm:w-72 space-y-3 bg-gradient-to-br from-blue-50 to-blue-100 p-5 rounded-lg border border-blue-200 shadow-sm">
+                <div className="w-full sm:w-72 space-y-3 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900 dark:to-blue-800 p-5 rounded-lg border border-blue-200 dark:border-blue-700 shadow-sm">
                   <div className="flex justify-between">
-                    <span className="font-medium text-gray-700">Subtotal:</span>
-                    <span className="font-medium">
-                      {formatCurrency(subtotal)}
-                    </span>
+                    <span className="font-medium text-gray-700 dark:text-blue-200">Subtotal:</span>
+                    <span className="font-medium text-gray-900 dark:text-white">{formatCurrency(subtotal)}</span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-gray-700">Amount Paid:</span>
+                    <span className="text-gray-700 dark:text-blue-200">Amount Paid:</span>
                     <input
                       type="number"
                       min="0"
                       step="0.01"
                       value={newSale.paid}
-                      onChange={(e) =>
-                        setNewSale({ ...newSale, paid: e.target.value })
-                      }
-                      className="w-32 px-2 py-1 border border-gray-300 rounded-md text-right focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors bg-white"
+                      onChange={(e) => setNewSale({ ...newSale, paid: e.target.value })}
+                      className="w-32 px-2 py-1 border border-gray-300 dark:border-gray-600 rounded-md text-right focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 transition-colors"
                       placeholder="0.00"
+                      disabled={loading}
                     />
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-gray-700">Payment Method:</span>
+                    <span className="text-gray-700 dark:text-blue-200">Payment Method:</span>
                     <select
                       value={newSale.paymentMethod}
                       onChange={(e) =>
-                        setNewSale({
-                          ...newSale,
-                          paymentMethod: e.target.value,
-                        })
+                        setNewSale({ ...newSale, paymentMethod: e.target.value })
                       }
-                      className="w-32 px-2 py-1 border border-gray-300 rounded-md text-right focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors bg-white"
+                      className="w-32 px-2 py-1 border border-gray-300 dark:border-gray-600 rounded-md text-right focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 transition-colors"
+                      disabled={loading}
                     >
-                      <option value="Cash">Cash</option>
-                      <option value="Bank Transfer">Bank Transfer</option>
-                      <option value="Credit Card">Credit Card</option>
-                      <option value="Mobile Wallet">Mobile Wallet</option>
-                      <option value="Check">Check</option>
+                      <option value="CASH">Cash</option>
+                      <option value="BANK_TRANSFER">Bank Transfer</option>
+                      <option value="ONLINE">Online</option>
                       <option value="Other">Other</option>
                     </select>
                   </div>
-                  <div className="flex justify-between font-medium pt-2 border-t border-blue-200">
-                    <span className="text-gray-700">Due Amount:</span>
+                  <div className="flex justify-between font-medium pt-2 border-t border-blue-200 dark:border-blue-700">
+                    <span className="text-gray-700 dark:text-blue-200">Due Amount:</span>
                     <span
                       className={
-                        due > 0
-                          ? "text-red-600 font-bold"
-                          : "text-green-600 font-bold"
+                        due > 0 ? "text-red-600 dark:text-red-400 font-bold" : "text-green-600 dark:text-green-400 font-bold"
                       }
                     >
                       {formatCurrency(due)}
@@ -317,31 +377,56 @@ function AddNewSaleModal({ onClose }) {
               </div>
             </div>
 
-            <div className="border-t pt-4 flex justify-end space-x-3">
+            <div className="border-t pt-4 flex justify-end space-x-3 border-gray-200 dark:border-gray-600">
               <button
                 type="button"
                 onClick={onClose}
-                className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+                disabled={loading}
+                className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 transition-colors disabled:opacity-50"
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors shadow-md hover:shadow-lg flex items-center"
+                disabled={loading || !isFormValid()}
+                className="px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 dark:from-blue-700 dark:to-blue-800 text-white rounded-md hover:from-blue-700 hover:to-blue-800 dark:hover:from-blue-800 dark:hover:to-blue-900 transition-colors shadow-md hover:shadow-lg flex items-center disabled:opacity-50"
               >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-5 w-5 mr-1"
-                  viewBox="0 0 20 20"
-                  fill="currentColor"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-                Record Sale
+                {loading ? (
+                  <svg
+                    className="animate-spin h-5 w-5 mr-2 text-white"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    ></circle>
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    ></path>
+                  </svg>
+                ) : (
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-5 w-5 mr-1"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                )}
+                {loading ? "Recording..." : "Record Sale"}
               </button>
             </div>
           </form>

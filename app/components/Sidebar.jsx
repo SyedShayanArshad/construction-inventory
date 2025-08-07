@@ -11,15 +11,19 @@ export default function Sidebar() {
     { path: '/inventory', label: 'Inventory', icon: 'package' },
     { path: '/vendors', label: 'Vendors', icon: 'truck' },
     { path: '/sales', label: 'Sales', icon: 'shopping-cart' },
-    { path: '/reports', label: 'Reports', icon: 'bar-chart-2' }
+    { path: '/reports', label: 'Reports', icon: 'bar-chart-2' },
   ];
 
   return (
-    <div className="hidden md:flex flex-col w-64 bg-white border-r h-screen p-4 fixed shadow-sm">
-      <div className="mb-8 mt-2">
-        <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-4 rounded-lg mb-2">
-          <h1 className="text-xl font-bold text-center">Javaid Building Material Shop</h1>
-          <p className="text-center text-blue-100 text-sm">Inventory Management</p>
+    <div className="hidden md:flex flex-col w-64 border-r border-gray-200 dark:border-gray-600 h-screen p-4 fixed shadow-sm">
+      <div className="mb-4">
+        <div className="bg-gradient-to-r from-blue-600 to-blue-700 dark:from-blue-700 dark:to-blue-800 text-white p-4 rounded-lg">
+          <h1 className="text-xl font-bold text-center">
+            Javaid Building Material Shop
+          </h1>
+          <p className="text-center text-blue-100 dark:text-blue-200 text-sm">
+            Inventory Management
+          </p>
         </div>
       </div>
       <nav className="space-y-2 flex-grow">
@@ -31,11 +35,13 @@ export default function Sidebar() {
               key={item.path}
               className={`flex items-center px-4 py-3 text-sm rounded-md transition-all ${
                 isActive
-                  ? 'bg-gradient-to-r from-blue-50 to-blue-100 text-blue-700 font-medium border-l-4 border-blue-600'
-                  : 'text-gray-700 hover:bg-gray-100'
+                  ? 'bg-gradient-to-r from-blue-50 to-blue-100 text-blue-700 font-medium border-l-4 border-blue-600 dark:from-blue-900 dark:to-blue-800 dark:text-blue-100 dark:border-blue-500'
+                  : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
               }`}
             >
-              <span className={`mr-3 ${isActive ? 'text-blue-600' : ''}`}>
+              <span
+                className={`mr-3 ${isActive ? 'text-blue-600 dark:text-blue-400' : 'text-gray-500 dark:text-gray-300'}`}
+              >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   className="h-5 w-5"
@@ -89,13 +95,16 @@ export default function Sidebar() {
           );
         })}
       </nav>
-      
-      <div className="mt-auto pt-4 border-t">
-        <div className="bg-blue-50 p-4 rounded-lg">
-          <h3 className="text-sm font-medium text-blue-800 mb-2">Construction Inventory System</h3>
-          <p className="text-xs text-gray-600">Specialized construction materials management for Retailers.</p>
+      <div className="mt-auto pt-4 border-t border-gray-200 dark:border-gray-600">
+        <div className="bg-blue-50 dark:bg-blue-900/50 p-4 rounded-lg">
+          <h3 className="text-sm font-medium text-blue-800 dark:text-blue-200 mb-2">
+            Construction Inventory System
+          </h3>
+          <p className="text-xs text-blue-600 dark:text-blue-300">
+            Specialized construction materials management for Retailers.
+          </p>
         </div>
       </div>
     </div>
   );
-} 
+}
