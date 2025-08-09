@@ -128,22 +128,18 @@ export default function Vendors() {
   };
 
   const handleSubmitPayment = async (paymentData) => {
-    try {
-      const response = await fetch('/api/vendors/payments', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(paymentData),
-      });
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to record payment');
-      }
-      toast.success('Payment recorded successfully!');
-      fetchVendors();
-    } catch (error) {
-      throw error; // Let AddVendorPaymentModal handle the error
-    }
-  };
+  const response = await fetch('/api/vendors/payments', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(paymentData),
+  });
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || 'Failed to record payment');
+  }
+  toast.success('Payment recorded successfully!');
+  fetchVendors();
+};
 
   const getVendorPurchases = async (vendorId) => {
     try {
